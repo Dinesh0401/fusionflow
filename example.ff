@@ -1,0 +1,18 @@
+dataset customers from "data/customers.csv"
+
+pipeline churn_features:
+    from customers
+    where active == 1
+    derive spend_per_day = amount / days
+    features [spend_per_day, age]
+    target churned
+    split 80% train, 20% test
+end
+
+experiment churn_exp:
+    model random_forest
+    using churn_features
+    metrics [accuracy, f1]
+end
+
+print metrics of churn_exp

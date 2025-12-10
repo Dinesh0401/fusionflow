@@ -1,0 +1,45 @@
+[build-system]
+requires = ["setuptools>=45", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "fusionflow"
+version = "0.1.0"
+description = "A temporal ML pipeline DSL with first-class branching"
+readme = "README.md"
+requires-python = ">=3.8"
+license = {text = "MIT"}
+authors = [
+    {name = "FusionFlow Contributors"}
+]
+keywords = ["ml", "pipeline", "dsl", "temporal", "branching"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+]
+
+dependencies = [
+    "pandas>=1.3.0",
+    "scikit-learn>=1.0.0",
+    "numpy>=1.20.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0.0",
+    "black>=22.0.0",
+    "mypy>=0.950",
+]
+
+[project.scripts]
+fusionflow = "fusionflow.__main__:main"
+
+[project.urls]
+Homepage = "https://github.com/Dinesh0401/fusionflow"
+Repository = "https://github.com/Dinesh0401/fusionflow"
