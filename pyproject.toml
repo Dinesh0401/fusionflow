@@ -43,3 +43,8 @@ fusionflow = "fusionflow.__main__:main"
 [project.urls]
 Homepage = "https://github.com/Dinesh0401/fusionflow"
 Repository = "https://github.com/Dinesh0401/fusionflow"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["fusionflow*"]
+exclude = ["tests*", "assets*", "vscode-fusionflow*", "dist*", "build*"]
