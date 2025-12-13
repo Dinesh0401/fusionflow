@@ -25,6 +25,9 @@ class Settings:
     max_retries: int = 1
     retry_delay_seconds: float = 0.5
     use_mock_data: bool = True
+    telemetry_path: str = "data/telemetry/pipeline_runs.csv"
+    failure_model_path: str = "models/failure_model.joblib"
+    failure_risk_threshold: float = 0.6
 
     @classmethod
     def from_env(cls) -> "Settings":
@@ -59,6 +62,9 @@ class Settings:
             max_retries=int(os.getenv("MAX_RETRIES", "1")),
             retry_delay_seconds=float(os.getenv("RETRY_DELAY_SECONDS", "0.5")),
             use_mock_data=os.getenv("USE_MOCK_DATA", "True").lower() == "true",
+            telemetry_path=os.getenv("TELEMETRY_PATH", "data/telemetry/pipeline_runs.csv"),
+            failure_model_path=os.getenv("FAILURE_MODEL_PATH", "models/failure_model.joblib"),
+            failure_risk_threshold=float(os.getenv("FAILURE_RISK_THRESHOLD", "0.6")),
         )
 
 

@@ -1,0 +1,13 @@
+pipeline_id,run_id,task_id,step,status,start_time,end_time,duration_ms,rows_in,rows_out,error_type,resource_cpu,resource_mem,metadata
+Sample Pipeline,24304a94-031f-4547-96e9-9434f4e159c5,extract,extract,completed,2025-12-13T16:27:44.274994,2025-12-13T16:27:44.274994,0.0,,3.0,,,,
+Sample Pipeline,24304a94-031f-4547-96e9-9434f4e159c5,transform,transform,completed,2025-12-13T16:27:44.274994,2025-12-13T16:27:44.274994,0.0,3.0,3.0,,,,
+Sample Pipeline,24304a94-031f-4547-96e9-9434f4e159c5,load,load,completed,2025-12-13T16:27:44.274994,2025-12-13T16:27:44.276477,1.4829999999999999,3.0,,,,,
+Sample Pipeline,7ebb861a-fae2-4b59-9eb8-9e56e4663e1b,extract,extract,completed,2025-12-13T16:27:44.321987,2025-12-13T16:27:44.322990,1.003,,3.0,,,,
+Sample Pipeline,7ebb861a-fae2-4b59-9eb8-9e56e4663e1b,transform,transform,completed,2025-12-13T16:27:44.322990,2025-12-13T16:27:44.322990,0.0,3.0,3.0,,,,
+Sample Pipeline,7ebb861a-fae2-4b59-9eb8-9e56e4663e1b,load,load,completed,2025-12-13T16:27:44.322990,2025-12-13T16:27:44.322990,0.0,3.0,,,,,
+Sample Pipeline,66ec4b1a-97e6-476f-b6fa-c755bc7e5bf5,extract,extract,completed,2025-12-13T16:44:45.220662,2025-12-13T16:44:45.221658,0.9959999999999999,,3.0,,,,
+Sample Pipeline,66ec4b1a-97e6-476f-b6fa-c755bc7e5bf5,transform,transform,completed,2025-12-13T16:44:45.221658,2025-12-13T16:44:45.221658,0.0,3.0,3.0,,,,
+Sample Pipeline,66ec4b1a-97e6-476f-b6fa-c755bc7e5bf5,load,load,completed,2025-12-13T16:44:45.221658,2025-12-13T16:44:45.221658,0.0,3.0,,,,,
+Sample Pipeline,4c7749d2-2238-4a65-a097-d8a2ae05d9eb,extract,extract,completed,2025-12-13T16:44:45.227660,2025-12-13T16:44:45.228665,1.0050000000000001,,3.0,,,,
+Sample Pipeline,4c7749d2-2238-4a65-a097-d8a2ae05d9eb,transform,transform,completed,2025-12-13T16:44:45.228665,2025-12-13T16:44:45.228665,0.0,3.0,3.0,,,,
+Sample Pipeline,4c7749d2-2238-4a65-a097-d8a2ae05d9eb,load,load,completed,2025-12-13T16:44:45.228665,2025-12-13T16:44:45.228665,0.0,3.0,,,,,

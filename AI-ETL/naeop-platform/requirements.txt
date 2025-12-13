@@ -6,3 +6,4 @@ apache-airflow
 requests
 pytest
 loguru
+scikit-learn

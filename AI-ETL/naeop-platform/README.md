@@ -7,7 +7,8 @@ The NeuroAdaptive ETL Orchestration Platform (NAEOP) is designed to facilitate t
 - Modular architecture for easy extension and maintenance.
 - Support for various data sources and targets.
 - DAG construction, execution, and lightweight scheduling.
-- Monitoring and alerting mechanisms for pipeline health.
+- Structured telemetry collection with CSV-backed history.
+- Failure risk prediction model integration (Phase-2A) with alerting hooks.
 - Example pipelines to demonstrate usage.
 
 ## Project Structure
@@ -37,10 +38,16 @@ naeop-platform
 │   │       └── transformer.py   # Data transformation logic
 │   ├── monitoring
 │   │   ├── metrics.py          # Metrics collection
-│   │   └── alerts.py           # Alerting mechanisms
+│   │   ├── alerts.py           # Alerting mechanisms
+│   │   └── telemetry_schema.py # Structured telemetry + storage
+│   ├── ml
+│   │   ├── feature_store.py    # Feature aggregation from telemetry
+│   │   ├── failure_model.py    # Failure prediction model + inference
+│   │   └── train_failure_model.py # CLI to retrain model
 │   └── tests
 │       ├── __init__.py         # Tests package
-│       └── test_sample.py      # Unit tests
+│       ├── test_sample.py      # Pipeline smoke tests
+│       └── test_failure_model.py # Feature store + predictor tests
 ├── pyproject.toml              # Project configuration
 ├── requirements.txt            # Required Python packages
 └── README.md                   # Project documentation
@@ -54,7 +61,12 @@ naeop-platform
    pip install -r requirements.txt
    ```
 
-2. Run the sample pipeline:
+2. (Optional) Train or refresh the failure prediction model once telemetry has been generated:
+   ```
+   python -m src.ml.train_failure_model
+   ```
+
+3. Run the sample pipeline:
    ```
    python src/main.py
    ```

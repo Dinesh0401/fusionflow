@@ -7,6 +7,7 @@ from src.config.settings import get_settings
 from src.core.logger import get_logger
 from src.orchestrator.dag_builder import DAGBuilder, Task
 from src.orchestrator.executor import Executor
+from src.ml.failure_model import FailurePredictor
 from src.monitoring.alerts import AlertManager
 from src.monitoring.metrics import Metrics
 
@@ -24,6 +25,11 @@ class SamplePipeline:
         self.metrics = Metrics()
         self.alerts = AlertManager(threshold=5.0)
         self.builder = DAGBuilder(logger_name=self.__class__.__name__)
+        self.failure_predictor = FailurePredictor(
+            telemetry_path=self.settings.telemetry_path,
+            model_path=self.settings.failure_model_path,
+            risk_threshold=self.settings.failure_risk_threshold,
+        )
         self._build_graph()
 
     def _build_graph(self) -> None:
@@ -67,6 +73,9 @@ class SamplePipeline:
             max_retries=self.settings.max_retries,
             retry_delay_seconds=self.settings.retry_delay_seconds,
             logger_name=self.__class__.__name__,
+            pipeline_id=self.name,
+            telemetry_store=None,
+            failure_predictor=self.failure_predictor,
         )
 
         try:
