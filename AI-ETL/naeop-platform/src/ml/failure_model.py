@@ -23,7 +23,7 @@ except ImportError:  # pragma: no cover
     StandardScaler = None  # type: ignore
     SKLEARN_AVAILABLE = False
 
-from src.ml.feature_store import TELEMETRY_DEFAULT_PATH, build_feature_matrix, load_telemetry
+from src.ml.feature_store import TELEMETRY_DEFAULT_PATH, build_feature_matrix, latest_feature_vector, load_telemetry
 
 LOGGER = logging.getLogger(__name__)
 DEFAULT_MODEL_PATH = Path("models/failure_model.joblib")
@@ -101,24 +101,13 @@ class FailurePredictor:
             LOGGER.info("Failure model unavailable; skipping risk prediction.")
             return None
 
-        df = load_telemetry(self.telemetry_path)
-        if df.empty:
+        feature_vector = latest_feature_vector(
+            pipeline_id,
+            telemetry_path=self.telemetry_path,
+            expected_columns=self._feature_columns,
+        )
+        if feature_vector is None:
             return None
-        df = df[df["pipeline_id"] == pipeline_id]
-        if df.empty:
-            return None
 
-        features, _ = build_feature_matrix(df)
-        features = features.sort_values(by="run_id")
-        latest = features.iloc[-1]
-        X = latest.drop(labels=["pipeline_id", "run_id"], errors="ignore").to_frame().T
-
-        # Ensure same feature columns order
-        if self._feature_columns:
-            missing = [col for col in self._feature_columns if col not in X]
-            for col in missing:
-                X[col] = 0.0
-            X = X[self._feature_columns]
-
-        risk = float(self._model.predict_proba(X)[0, 1])
+        risk = float(self._model.predict_proba(feature_vector)[0, 1])
         return risk

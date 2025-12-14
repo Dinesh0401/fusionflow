@@ -1,10 +1,18 @@
+import tempfile
 import unittest
+
+from src.monitoring.telemetry_schema import TelemetryStore
 from src.pipelines.examples.sample_pipeline import SamplePipeline
 
 class TestSamplePipeline(unittest.TestCase):
 
     def setUp(self):
-        self.pipeline = SamplePipeline()
+        self.temp_dir = tempfile.TemporaryDirectory()
+        telemetry_store = TelemetryStore(base_path=self.temp_dir.name, filename="pipeline_runs.csv")
+        self.pipeline = SamplePipeline(telemetry_store=telemetry_store)
+
+    def tearDown(self):
+        self.temp_dir.cleanup()
 
     def test_pipeline_initialization(self):
         self.assertIsNotNone(self.pipeline)
