@@ -1,0 +1,7 @@
+provider,model,total,mean_confidence,block_rate,false_allow_rate,false_block_rate,accuracy
+anthropic,claude-3-haiku,50,0.707421,0.48,0.06,0.0,0.94
+anthropic,claude-sonnet-4-20250514,52,0.749712,0.423077,0.076923,0.0,0.923077
+google,gemini-1.5-pro,63,0.710664,0.412698,0.079365,0.0,0.920635
+google,gemini-2.0-flash,70,0.71707,0.442857,0.014286,0.0,0.985714
+openai,gpt-4o,59,0.693767,0.457627,0.033898,0.0,0.966102
+openai,gpt-4o-mini,56,0.682026,0.571429,0.071429,0.0,0.928571
