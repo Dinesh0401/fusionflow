@@ -28,6 +28,34 @@ class Settings:
     telemetry_path: str = "data/telemetry/pipeline_runs.csv"
     failure_model_path: str = "models/failure_model.joblib"
     failure_risk_threshold: float = 0.6
+    use_advanced_failure_model: bool = True
+    advanced_failure_model_path: str = "models/failure_model_advanced.joblib"
+    failure_risk_ensemble_weight: float = 0.6
+    llm_agent_enabled: bool = True
+    llm_agent_provider: str = "mock"
+    llm_agent_model: str = "gpt-4o-mini"
+    llm_agent_temperature: float = 0.2
+    llm_agent_max_tokens: int = 512
+    llm_agent_api_key_env: str = "OPENAI_API_KEY"
+    llm_agent_endpoint: str = ""
+    llm_agent_decision_threshold: float = 0.6
+    llm_agent_human_in_loop: bool = True
+
+    # Alert backend settings
+    alert_backend: str = "stdout"  # stdout | slack | email
+    slack_webhook_url: str = ""
+    slack_timeout_seconds: float = 5.0
+    email_smtp_host: str = ""
+    email_smtp_port: int = 587
+    email_smtp_username: str = ""
+    email_smtp_password: str = ""
+    email_recipients: str = ""  # comma-separated
+
+    # Retry policy settings
+    retry_strategy: str = "fixed"  # fixed | exponential
+    retry_base_delay_seconds: float = 1.0
+    retry_max_delay_seconds: float = 30.0
+    retry_jitter: float = 0.25
 
     @classmethod
     def from_env(cls) -> "Settings":
@@ -65,6 +93,30 @@ class Settings:
             telemetry_path=os.getenv("TELEMETRY_PATH", "data/telemetry/pipeline_runs.csv"),
             failure_model_path=os.getenv("FAILURE_MODEL_PATH", "models/failure_model.joblib"),
             failure_risk_threshold=float(os.getenv("FAILURE_RISK_THRESHOLD", "0.6")),
+            use_advanced_failure_model=os.getenv("USE_ADVANCED_FAILURE_MODEL", "True").lower() == "true",
+            advanced_failure_model_path=os.getenv("ADVANCED_FAILURE_MODEL_PATH", "models/failure_model_advanced.joblib"),
+            failure_risk_ensemble_weight=float(os.getenv("FAILURE_RISK_ENSEMBLE_WEIGHT", "0.6")),
+            llm_agent_enabled=os.getenv("LLM_AGENT_ENABLED", "True").lower() == "true",
+            llm_agent_provider=os.getenv("LLM_AGENT_PROVIDER", "mock"),
+            llm_agent_model=os.getenv("LLM_AGENT_MODEL", "gpt-4o-mini"),
+            llm_agent_temperature=float(os.getenv("LLM_AGENT_TEMPERATURE", "0.2")),
+            llm_agent_max_tokens=int(os.getenv("LLM_AGENT_MAX_TOKENS", "512")),
+            llm_agent_api_key_env=os.getenv("LLM_AGENT_API_KEY_ENV", "OPENAI_API_KEY"),
+            llm_agent_endpoint=os.getenv("LLM_AGENT_ENDPOINT", ""),
+            llm_agent_decision_threshold=float(os.getenv("LLM_AGENT_DECISION_THRESHOLD", "0.6")),
+            llm_agent_human_in_loop=os.getenv("LLM_AGENT_HUMAN_IN_LOOP", "True").lower() == "true",
+            alert_backend=os.getenv("ALERT_BACKEND", "stdout"),
+            slack_webhook_url=os.getenv("SLACK_WEBHOOK_URL", ""),
+            slack_timeout_seconds=float(os.getenv("SLACK_TIMEOUT_SECONDS", "5.0")),
+            email_smtp_host=os.getenv("EMAIL_SMTP_HOST", ""),
+            email_smtp_port=int(os.getenv("EMAIL_SMTP_PORT", "587")),
+            email_smtp_username=os.getenv("EMAIL_SMTP_USERNAME", ""),
+            email_smtp_password=os.getenv("EMAIL_SMTP_PASSWORD", ""),
+            email_recipients=os.getenv("EMAIL_RECIPIENTS", ""),
+            retry_strategy=os.getenv("RETRY_STRATEGY", "fixed"),
+            retry_base_delay_seconds=float(os.getenv("RETRY_BASE_DELAY_SECONDS", "1.0")),
+            retry_max_delay_seconds=float(os.getenv("RETRY_MAX_DELAY_SECONDS", "30.0")),
+            retry_jitter=float(os.getenv("RETRY_JITTER", "0.25")),
         )
 
 
