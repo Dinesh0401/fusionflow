@@ -12,8 +12,8 @@
 │                                                                │
 │  📖 USER GUIDES (For Developers)                              │
 │  ├─ HOW_TO_USE_FUSIONFLOW.md          ⭐ NEW (450+ lines)    │
-│  │  └─ Complete 8-step user journey                          │
-│  │     Install → Write → Run → Advanced                      │
+│  │  └─ Complete 8-step user journey                           │
+│  │     Install → Write → Run → Advanced                       │
 │  │                                                             │
 │  ├─ QUICK_REFERENCE.md                ⭐ NEW (300+ lines)    │
 │  │  └─ One-page cheat sheet                                  │
