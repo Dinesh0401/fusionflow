@@ -10,13 +10,13 @@
 │                      (12 Total Files)                          │
 ├────────────────────────────────────────────────────────────────┤
 │                                                                │
-│  📖 USER GUIDES (For Developers)                              │
-│  ├─ HOW_TO_USE_FUSIONFLOW.md          ⭐ NEW (450+ lines)    │
-│  │  └─ Complete 8-step user journey                           │
-│  │     Install → Write → Run → Advanced                       │
+│  📖 USER GUIDES (For Developers)                               │
+│  ├─ HOW_TO_USE_FUSIONFLOW.md          ⭐ NEW (450+ lines)      │
+│  │  └─ Complete 8-step user journey                            │
+│  │     Install → Write → Run → Advanced                        │
 │  │                                                             │
 │  ├─ QUICK_REFERENCE.md                ⭐ NEW (300+ lines)    │
-│  │  └─ One-page cheat sheet                                  │
+│  │  └─ One-page cheat sheet                                   │
 │  │     Installation, syntax, commands, examples              │
 │  │                                                             │
 │  📦 DISTRIBUTION GUIDES (For You)                             │
