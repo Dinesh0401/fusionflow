@@ -1,117 +1,141 @@
 import pytest
+
 from fusionflow.lexer import Lexer
 from fusionflow.parser import Parser
-from fusionflow.ast_nodes import *
+from fusionflow.ast_nodes import (
+    Program,
+    DatasetDeclaration,
+    SchemaField,
+    PipelineDefinition,
+    DeriveStep,
+    SelectStep,
+    TargetStep,
+    ModelDefinition,
+    ExperimentDefinition,
+    TimelineDefinition,
+    MergeStatement,
+    MergeStrategy,
+    BinaryOp,
+)
 
-def test_parse_dataset():
-    source = 'dataset customers from "data.csv"'
-    lexer = Lexer(source)
-    tokens = lexer.tokenize()
-    parser = Parser(tokens)
-    ast = parser.parse()
-    
-    assert len(ast.statements) == 1
-    assert isinstance(ast.statements[0], DatasetDeclaration)
-    assert ast.statements[0].name == "customers"
-    assert ast.statements[0].path == "data.csv"
 
-def test_parse_pipeline():
+def parse_source(source: str) -> Program:
+    tokens = Lexer(source).tokenize()
+    return Parser(tokens).parse()
+
+
+def test_parse_dataset_with_schema():
     source = """
-    pipeline test:
-        from customers
-        where age > 18
-        features [age, income]
-        target churned
-        split 80% train, 20% test
+    dataset customers v1
+        description "Customer base snapshot"
+        source "s3://bucket/customers.csv"
+        schema {
+            id: int
+            churned: bool
+        }
     end
     """
-    lexer = Lexer(source)
-    tokens = lexer.tokenize()
-    parser = Parser(tokens)
-    ast = parser.parse()
-    
-    assert len(ast.statements) == 1
+    ast = parse_source(source)
+    dataset = ast.statements[0]
+    assert isinstance(dataset, DatasetDeclaration)
+    assert dataset.name == "customers"
+    assert dataset.version == "v1"
+    assert dataset.source == "s3://bucket/customers.csv"
+    assert dataset.description == "Customer base snapshot"
+    assert dataset.schema == [SchemaField("id", "int"), SchemaField("churned", "bool")]
+
+
+def test_parse_pipeline_definition():
+    source = """
+    pipeline churn_features
+        from customers v1
+        derive spend_per_day = amount / days
+        select [spend_per_day, amount]
+        target churned
+    end
+    """
+    ast = parse_source(source)
     pipeline = ast.statements[0]
     assert isinstance(pipeline, PipelineDefinition)
-    assert pipeline.name == "test"
-    assert len(pipeline.body) > 0
+    assert pipeline.name == "churn_features"
+    assert pipeline.source.name == "customers"
+    assert pipeline.source.version == "v1"
+    assert isinstance(pipeline.steps[0], DeriveStep)
+    assert isinstance(pipeline.steps[0].expression, BinaryOp)
+    assert isinstance(pipeline.steps[1], SelectStep)
+    assert isinstance(pipeline.steps[2], TargetStep)
 
-def test_parse_experiment():
+
+def test_parse_model_with_params():
     source = """
-    experiment exp1:
-        model random_forest
-        using pipeline1
-        metrics [accuracy, f1]
+    model rf_v1
+        type random_forest
+        params {
+            trees: 200
+            depth: 8
+        }
     end
     """
-    lexer = Lexer(source)
-    tokens = lexer.tokenize()
-    parser = Parser(tokens)
-    ast = parser.parse()
-    
-    assert len(ast.statements) == 1
+    ast = parse_source(source)
+    model = ast.statements[0]
+    assert isinstance(model, ModelDefinition)
+    assert model.type_name == "random_forest"
+    assert set(model.params.keys()) == {"trees", "depth"}
+
+
+def test_parse_experiment_with_extension():
+    source = """
+    experiment churn_baseline
+        uses pipeline churn_features
+        uses model rf_v1
+        metrics [accuracy, f1]
+        extend {
+            derive bonus = spend_per_day * 0.1
+        }
+    end
+    """
+    ast = parse_source(source)
     exp = ast.statements[0]
     assert isinstance(exp, ExperimentDefinition)
-    assert exp.model_type == "random_forest"
-    assert "accuracy" in exp.metrics
+    assert exp.pipeline == "churn_features"
+    assert exp.model == "rf_v1"
+    assert exp.metrics == ["accuracy", "f1"]
+    assert exp.extension is not None
+    assert isinstance(exp.extension.steps[0], DeriveStep)
 
-def test_parse_expression():
+
+def test_parse_timeline_with_nested_experiment():
     source = """
-    pipeline test:
-        from data
-        derive total = price * quantity
+    timeline v2 "Feature exploration"
+        experiment churn_interaction
+            uses pipeline churn_features
+            uses model rf_v1
+            metrics [accuracy]
+        end
     end
     """
-    lexer = Lexer(source)
-    tokens = lexer.tokenize()
-    parser = Parser(tokens)
-    ast = parser.parse()
-    
-    pipeline = ast.statements[0]
-    derive_clause = pipeline.body[1]
-    assert isinstance(derive_clause, DeriveClause)
-    assert isinstance(derive_clause.expression, BinaryOp)
+    ast = parse_source(source)
+    timeline = ast.statements[0]
+    assert isinstance(timeline, TimelineDefinition)
+    assert timeline.name == "v2"
+    assert timeline.description == "Feature exploration"
+    assert len(timeline.experiments) == 1
+    assert timeline.experiments[0].name == "churn_interaction"
 
-def test_parse_checkpoint():
-    source = 'checkpoint "baseline"'
-    lexer = Lexer(source)
-    tokens = lexer.tokenize()
-    parser = Parser(tokens)
-    ast = parser.parse()
-    
-    assert isinstance(ast.statements[0], CheckpointStatement)
-    assert ast.statements[0].name == "baseline"
 
-def test_parse_timeline():
+def test_parse_merge_statement():
     source = """
-    timeline "exp1" {
-        dataset test from "test.csv"
-    }
+    merge v2 into main
+        because "Improved f1 by 4%"
+        strategy prefer_metrics f1
+    end
     """
-    lexer = Lexer(source)
-    tokens = lexer.tokenize()
-    parser = Parser(tokens)
-    ast = parser.parse()
-    
-    assert isinstance(ast.statements[0], TimelineStatement)
-    assert ast.statements[0].name == "exp1"
-
-def test_parse_print():
-    source = 'print metrics of experiment1'
-    lexer = Lexer(source)
-    tokens = lexer.tokenize()
-    parser = Parser(tokens)
-    ast = parser.parse()
-    
-    assert isinstance(ast.statements[0], PrintStatement)
-    assert ast.statements[0].what == "metrics"
-
-def test_parse_merge():
-    source = 'merge "exp1" into "main"'
-    lexer = Lexer(source)
-    tokens = lexer.tokenize()
-    parser = Parser(tokens)
-    ast = parser.parse()
-    
-    assert isinstance(ast.statements[0], MergeStatement)
-    assert ast.statements[0].source_timeline == "exp1"
+    ast = parse_source(source)
+    merge_stmt = ast.statements[0]
+    assert isinstance(merge_stmt, MergeStatement)
+    assert merge_stmt.source_timeline == "v2"
+    assert merge_stmt.target_timeline == "main"
+    assert merge_stmt.justification == "Improved f1 by 4%"
+    assert isinstance(merge_stmt.strategy, MergeStrategy)
+    assert merge_stmt.strategy.name == "prefer_metrics"
+    assert merge_stmt.strategy.arguments == ["f1"]
