@@ -12,28 +12,27 @@ class Lexer:
         
         self.keywords = {
             'dataset': TokenType.DATASET,
-            'from': TokenType.FROM,
             'pipeline': TokenType.PIPELINE,
-            'end': TokenType.END,
-            'where': TokenType.WHERE,
-            'join': TokenType.JOIN,
-            'on': TokenType.ON,
-            'derive': TokenType.DERIVE,
-            'features': TokenType.FEATURES,
-            'target': TokenType.TARGET,
-            'split': TokenType.SPLIT,
-            'experiment': TokenType.EXPERIMENT,
             'model': TokenType.MODEL,
-            'using': TokenType.USING,
-            'metrics': TokenType.METRICS,
-            'print': TokenType.PRINT,
-            'of': TokenType.OF,
-            'checkpoint': TokenType.CHECKPOINT,
+            'experiment': TokenType.EXPERIMENT,
             'timeline': TokenType.TIMELINE,
             'merge': TokenType.MERGE,
+            'from': TokenType.FROM,
+            'derive': TokenType.DERIVE,
+            'select': TokenType.SELECT,
+            'target': TokenType.TARGET,
+            'extend': TokenType.EXTEND,
+            'source': TokenType.SOURCE,
+            'schema': TokenType.SCHEMA,
+            'description': TokenType.DESCRIPTION,
+            'type': TokenType.TYPE,
+            'params': TokenType.PARAMS,
+            'uses': TokenType.USES,
+            'metrics': TokenType.METRICS,
             'into': TokenType.INTO,
-            'undo': TokenType.UNDO,
-            'versioned': TokenType.VERSIONED,
+            'because': TokenType.BECAUSE,
+            'strategy': TokenType.STRATEGY,
+            'end': TokenType.END,
             'and': TokenType.AND,
             'or': TokenType.OR,
             'not': TokenType.NOT,
@@ -60,21 +59,21 @@ class Lexer:
             else:
                 self.column += 1
             self.pos += 1
-    
+
     def skip_whitespace(self):
         while self.current_char() and self.current_char() in ' \t\r':
             self.advance()
-    
+
     def skip_comment(self):
         if self.current_char() == '#':
             while self.current_char() and self.current_char() != '\n':
                 self.advance()
-    
+
     def read_number(self):
         start_col = self.column
         num_str = ''
         has_dot = False
-        
+
         while self.current_char() and (self.current_char().isdigit() or self.current_char() == '.'):
             if self.current_char() == '.':
                 if has_dot:
@@ -82,15 +81,15 @@ class Lexer:
                 has_dot = True
             num_str += self.current_char()
             self.advance()
-        
+
         value = float(num_str) if has_dot else int(num_str)
         return Token(TokenType.NUMBER, value, self.line, start_col)
-    
+
     def read_string(self):
         start_col = self.column
         quote_char = self.current_char()
-        self.advance()  # Skip opening quote
-        
+        self.advance()
+
         string_value = ''
         while self.current_char() and self.current_char() != quote_char:
             if self.current_char() == '\\':
@@ -102,20 +101,20 @@ class Lexer:
             else:
                 string_value += self.current_char()
                 self.advance()
-        
+
         if self.current_char() == quote_char:
-            self.advance()  # Skip closing quote
-        
+            self.advance()
+
         return Token(TokenType.STRING, string_value, self.line, start_col)
-    
+
     def read_identifier(self):
         start_col = self.column
         identifier = ''
-        
+
         while self.current_char() and (self.current_char().isalnum() or self.current_char() == '_'):
             identifier += self.current_char()
             self.advance()
-        
+
         token_type = self.keywords.get(identifier.lower(), TokenType.IDENTIFIER)
         return Token(token_type, identifier, self.line, start_col)
     
@@ -216,9 +215,6 @@ class Lexer:
                 self.advance()
             elif char == '.':
                 self.tokens.append(Token(TokenType.DOT, '.', self.line, start_col))
-                self.advance()
-            elif char == '%':
-                self.tokens.append(Token(TokenType.PERCENT, '%', self.line, start_col))
                 self.advance()
             else:
                 raise SyntaxError(f"Unexpected character '{char}' at line {self.line}, column {self.column}")

@@ -7,32 +7,31 @@ class TokenType(Enum):
     NUMBER = auto()
     STRING = auto()
     IDENTIFIER = auto()
-    
+
     # Keywords
     DATASET = auto()
-    FROM = auto()
     PIPELINE = auto()
-    END = auto()
-    WHERE = auto()
-    JOIN = auto()
-    ON = auto()
-    DERIVE = auto()
-    FEATURES = auto()
-    TARGET = auto()
-    SPLIT = auto()
-    EXPERIMENT = auto()
     MODEL = auto()
-    USING = auto()
-    METRICS = auto()
-    PRINT = auto()
-    OF = auto()
-    CHECKPOINT = auto()
+    EXPERIMENT = auto()
     TIMELINE = auto()
     MERGE = auto()
+    FROM = auto()
+    DERIVE = auto()
+    SELECT = auto()
+    TARGET = auto()
+    EXTEND = auto()
+    SOURCE = auto()
+    SCHEMA = auto()
+    DESCRIPTION = auto()
+    TYPE = auto()
+    PARAMS = auto()
+    USES = auto()
+    METRICS = auto()
     INTO = auto()
-    UNDO = auto()
-    VERSIONED = auto()
-    
+    BECAUSE = auto()
+    STRATEGY = auto()
+    END = auto()
+
     # Operators
     PLUS = auto()
     MINUS = auto()
@@ -48,7 +47,7 @@ class TokenType(Enum):
     AND = auto()
     OR = auto()
     NOT = auto()
-    
+
     # Delimiters
     LPAREN = auto()
     RPAREN = auto()
@@ -59,8 +58,7 @@ class TokenType(Enum):
     COMMA = auto()
     COLON = auto()
     DOT = auto()
-    PERCENT = auto()
-    
+
     # Special
     NEWLINE = auto()
     EOF = auto()

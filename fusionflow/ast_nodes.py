@@ -1,7 +1,7 @@
 """AST node definitions for FusionFlow"""
 
 from dataclasses import dataclass
-from typing import Any, List, Optional
+from typing import Any, Dict, List, Optional
 
 @dataclass
 class ASTNode:
@@ -13,76 +13,82 @@ class Program(ASTNode):
     statements: List[ASTNode]
 
 @dataclass
+class SchemaField(ASTNode):
+    name: str
+    type_name: str
+
+@dataclass
 class DatasetDeclaration(ASTNode):
     name: str
-    path: str
-    versioned: bool = False
+    version: str
+    source: str
+    schema: List[SchemaField]
+    description: Optional[str] = None
 
 @dataclass
-class PipelineDefinition(ASTNode):
+class DatasetReference(ASTNode):
     name: str
-    body: List[ASTNode]
+    version: str
 
 @dataclass
-class FromClause(ASTNode):
-    dataset_name: str
+class PipelineStep(ASTNode):
+    pass
 
 @dataclass
-class WhereClause(ASTNode):
-    condition: 'Expression'
-
-@dataclass
-class JoinClause(ASTNode):
-    dataset_name: str
-    condition: 'Expression'
-
-@dataclass
-class DeriveClause(ASTNode):
+class DeriveStep(PipelineStep):
     variable: str
     expression: 'Expression'
 
 @dataclass
-class FeaturesClause(ASTNode):
-    feature_list: List[str]
+class SelectStep(PipelineStep):
+    fields: List[str]
 
 @dataclass
-class TargetClause(ASTNode):
-    target_name: str
+class TargetStep(PipelineStep):
+    field: str
 
 @dataclass
-class SplitClause(ASTNode):
-    train_percent: float
-    test_percent: float
+class PipelineDefinition(ASTNode):
+    name: str
+    source: DatasetReference
+    steps: List[PipelineStep]
+
+@dataclass
+class PipelineExtension(ASTNode):
+    steps: List[PipelineStep]
+
+@dataclass
+class ModelDefinition(ASTNode):
+    name: str
+    type_name: str
+    params: Dict[str, Any]
 
 @dataclass
 class ExperimentDefinition(ASTNode):
     name: str
-    model_type: str
-    pipeline_name: str
+    pipeline: str
+    model: str
     metrics: List[str]
+    description: Optional[str] = None
+    extension: Optional[PipelineExtension] = None
 
 @dataclass
-class PrintStatement(ASTNode):
-    what: str
-    of: str
-
-@dataclass
-class CheckpointStatement(ASTNode):
+class TimelineDefinition(ASTNode):
     name: str
+    description: Optional[str]
+    experiments: List[ExperimentDefinition]
 
 @dataclass
-class TimelineStatement(ASTNode):
+class MergeStrategy(ASTNode):
     name: str
-    body: List[ASTNode]
+    arguments: List[str]
 
 @dataclass
 class MergeStatement(ASTNode):
     source_timeline: str
     target_timeline: str
-
-@dataclass
-class UndoStatement(ASTNode):
-    checkpoint_name: str
+    justification: str
+    strategy: MergeStrategy
 
 # Expression nodes
 @dataclass
