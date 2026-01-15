@@ -1,242 +1,213 @@
 # FusionFlow
 
-**A polyglot, provenance-aware pipeline language with first-class temporal branching**
+**A Temporal Specification Language (TSL) for Machine Learning Experimentation**
 
-FusionFlow is an experimental domain-specific language (DSL) for data transformation and machine learning pipelines. It combines:
+FusionFlow is a domain-specific language (DSL) for **describing, versioning, and reasoning about machine‑learning experiments over time**.
 
-- **Temporal Branching** — First-class language primitives for checkpoints, timelines, and what-if experiments
-- **Unified Execution Graph (UPEG)** — Canonical intermediate representation with capability-aware backend planning
-- **Provenance Tracking** — Column-level lineage for reproducible experiments
-- **Polyglot Integration** — Seamless execution across Python (Pandas, scikit-learn) with future support for Spark/JVM and GPU backends
+Unlike traditional ML tools that execute scripts linearly, FusionFlow treats experiments as **temporal specifications**: immutable, branchable, mergeable descriptions of *what* was tried, *when*, and *why*.
 
-## ✨ Features
+A `.ff` file is **not a script** and **not a config file**. It is a **temporal contract** for reproducible ML experimentation.
 
-- **Python-like syntax** with domain-specific constructs for data pipelines
-- **Checkpoint/Timeline semantics** for reproducible what-if experiments
-- **Automatic ML model training** with built-in metrics
-- **Copy-on-write state management** for efficient branching
-- **VS Code syntax highlighting** (extension coming soon)
+---
+
+## ✨ Core Ideas
+
+* **Temporal Specification Language (TSL)**
+  Declare experiments, timelines, and merges explicitly. Time is a first‑class language concept.
+
+* **Deterministic Temporal IR**
+  FusionFlow compiles `.ff` files into a canonical, backend‑agnostic Temporal IR (JSON). Execution is downstream and optional.
+
+* **Provenance‑Aware Semantics**
+  Pipelines are pure transformations. Lineage is explicit and mergeable.
+
+* **Backend Independence**
+  The same `.ff` specification can target Pandas, Spark, GPU, or future engines without rewriting the source.
+
+---
 
 ## 🚀 Installation
 
 ### Python Users
+
 ```bash
 pip install fusionflow
 ```
 
-### Windows Users (.exe - No Python Needed)
-Download the latest `.exe` from [GitHub Releases](https://github.com/yourusername/fusionflow/releases)
+### Windows Users (.exe – No Python Required)
 
-### VS Code Users
-Install the extension from VS Code Marketplace:
-1. Open VS Code
-2. Go to Extensions (Ctrl+Shift+X)
-3. Search "FusionFlow"
-4. Click Install
+Download the standalone executable from **GitHub Releases**.
 
 ### From Source
+
 ```bash
 cd fusionflow
 pip install -e .
 ```
 
+---
+
+## 🧠 What Makes `.ff` Files Special?
+
+A `.ff` file:
+
+* Describes **what experiments exist** (not how to run them)
+* Encodes **experiment lineage and branching**
+* Requires **explicit justification for merges**
+* Is **diff‑able, reviewable, and auditable**
+* Compiles to a **stable Temporal IR contract**
+
+Think of `.ff` as:
+
+* Terraform for ML experiments
+* Git for experimentation timelines
+* SQL for experimental intent
+
+---
+
 ## 📖 Quick Start
 
-Create a file `example.ff`:
+Create `example.ff`:
 
 ```fusionflow
-dataset customers from "data/customers.csv"
-
-pipeline churn_features:
-    from customers
-    where active == 1
-    derive spend_per_day = amount / days
-    features [spend_per_day, age]
-    target churned
-    split 80% train, 20% test
+dataset customers v1
+    source "customers.csv"
 end
 
-experiment churn_exp:
-    model random_forest
-    using churn_features
+pipeline churn_features
+    from customers v1
+    derive spend_per_day = amount / days
+    select [spend_per_day, age, tenure]
+    target churned
+end
+
+model rf_v1
+    type random_forest
+    params { trees: 200 }
+end
+
+experiment churn_baseline
+    uses pipeline churn_features
+    uses model rf_v1
     metrics [accuracy, f1]
 end
-
-print metrics of churn_exp
 ```
 
-Run it:
+Compile the specification:
 
 ```bash
-fusionflow example.ff
+fusionflow compile example.ff --out churn.tir.json
 ```
 
-## 🌟 Language Features
+This produces a **Temporal IR** describing the experiment graph.
 
-### Dataset Declaration
+---
 
-```fusionflow
-dataset customers from "customers.csv"
-dataset events from "events.parquet" versioned true
-```
-
-### Pipeline Definition
+## 🕰️ Temporal Branching
 
 ```fusionflow
-pipeline my_pipeline:
-    from customers
-    join events on customers.id == events.user_id
-    where age > 18
-    derive total_spend = price * quantity
-    features [age, total_spend, category]
-    target purchased
-    split 80% train, 20% test
-end
-```
-
-### Experiments
-
-```fusionflow
-experiment my_experiment:
-    model random_forest          # or: logistic_regression
-    using my_pipeline
-    metrics [accuracy, f1, precision, recall, auc]
-end
-
-print metrics of my_experiment
-```
-
-### Temporal Branching
-
-```fusionflow
-# Save checkpoint
-checkpoint "baseline"
-
-experiment baseline_exp:
-    model random_forest
-    using features_v1
-    metrics [accuracy]
-end
-
-# Create isolated timeline
-timeline "experiment_v2" {
-    # Modify pipeline in this timeline
-    pipeline features_v2:
-        from customers
-        derive new_feature = col_a * col_b
-        features [new_feature, age]
-        target outcome
+timeline v2 "Interaction features"
+    experiment churn_interaction
+        uses pipeline churn_features
+        extend {
+            derive age_spend = age * spend_per_day
+        }
+        uses model rf_v1
+        metrics [accuracy, f1]
     end
-    
-    experiment v2_exp:
-        model random_forest
-        using features_v2
-        metrics [accuracy]
-    end
-}
+end
 
-# Merge best timeline back
-merge "experiment_v2" into "main"
-
-# Or restore checkpoint
-undo "baseline"
+merge v2 into main
+    because "Improved f1 without accuracy loss"
+    strategy prefer_metrics f1
+end
 ```
 
-## 📋 Command-Line Usage
+Rules:
+
+* Timelines never mutate history
+* Merges are explicit and justified
+* Lineage and types are validated
+
+---
+
+## 🛠️ CLI Usage
 
 ```bash
-# Run a script
-fusionflow script.ff
+# Compile to Temporal IR
+fusionflow compile spec.ff
 
-# Print AST (for debugging)
-fusionflow --print-ast script.ff
+# Validate specification
+fusionflow validate spec.ff
 
-# Show runtime state after execution
-fusionflow --print-state script.ff
-
-# Debug mode
-fusionflow --debug script.ff
+# Debug AST (language developers)
+fusionflow --print-ast spec.ff
 ```
 
-## 📖 Documentation
+FusionFlow **does not execute ML by default**. Execution engines consume the IR.
 
-**New to FusionFlow?** Start here:
-- **[How to Use FusionFlow](HOW_TO_USE_FUSIONFLOW.md)** ← Complete 8-step guide for beginners
-- **[Quick Reference](QUICK_REFERENCE.md)** ← One-page cheat sheet (bookmark this!)
-
-**Technical Documentation:**
-- [Architecture](ARCHITECTURE.md) - System design and components
-- [Implementation Summary](IMPLEMENTATION_SUMMARY.md) - Code walkthrough
-- [Why FusionFlow is Unique](WHY_FUSIONFLOW_IS_UNIQUE.md) - Differentiation & positioning
-
-**For Maintainers:**
-- [Publish to VS Code Marketplace](PUBLISH_VS_CODE_EXTENSION.md)
-- [Distribute Windows .exe](DISTRIBUTE_WINDOWS_EXE.md)
-- [Patent Filing Summary](PATENT_FILING_SUMMARY.md)
-
-## 🛠️ Development
-
-```bash
-# Install dev dependencies
-pip install -e ".[dev]"
-
-# Run tests
-pytest tests/
-
-# Format code
-black fusionflow/
-
-# Type check
-mypy fusionflow/
-```
+---
 
 ## 📐 Architecture
 
 FusionFlow consists of:
 
-1. **Lexer** (`lexer.py`) — Tokenizes source code
-2. **Parser** (`parser.py`) — Builds Abstract Syntax Tree (AST)
-3. **AST Nodes** (`ast_nodes.py`) — Structured representation
-4. **Runtime** (`runtime.py`) — State management with temporal branching
-5. **Interpreter** (`interpreter.py`) — Executes AST using Pandas/scikit-learn
-6. **CLI** (`__main__.py`) — Command-line interface
+1. **Lexer / Parser** – Produces a typed AST
+2. **Temporal Registry** – Records datasets, pipelines, experiments, timelines
+3. **Temporal IR Exporter** – Emits canonical JSON
+4. **CLI** – Validation and compilation
 
-### Future: UPEG Backend Planner
-
-The Unified Polyglot Execution Graph (UPEG) will enable:
-- Capability-aware backend selection (Pandas → Spark → GPU)
-- Cross-backend marshalling with provenance preservation
-- Runtime cost-based optimization
-- Polyglot code execution (Python/Java/JVM)
-
-## 🎯 Use Cases
-
-- **Rapid ML prototyping** with clean, declarative syntax
-- **Reproducible experiments** with checkpoint/timeline branching
-- **Data pipeline development** with built-in lineage tracking
-- **What-if analysis** through isolated timeline execution
-
-## 📄 License
-
-MIT License - see LICENSE file
-
-## 🤝 Contributing
-
-Contributions welcome! This is an experimental language designed for:
-- Research in programming language design
-- Temporal semantics in data pipelines
-- Provenance-aware optimization
-- Multi-backend execution planning
-
-## 🔗 Related Work
-
-- [dbt](https://www.getdbt.com/) — SQL-based data transformation
-- [Kedro](https://kedro.org/) — Python data pipeline framework
-- [Apache Beam](https://beam.apache.org/) — Unified batch/streaming model
-- [Kubeflow Pipelines](https://www.kubeflow.org/) — ML workflow orchestration
+Execution backends are intentionally decoupled.
 
 ---
 
-**Status**: Alpha / Proof of Concept
+## 📄 Documentation
 
-Built with ❤️ for exploring novel programming language concepts in data engineering and ML.
+* **LANGUAGE_SPEC_v1.md** – Frozen language semantics
+* **TEMPORAL_IR_v1.md** – IR schema and guarantees
+* **ARCHITECTURE.md** – System design
+* **WHY_FUSIONFLOW_IS_UNIQUE.md** – Positioning and research framing
+
+---
+
+## 🎯 Use Cases
+
+* Reproducible ML experimentation
+* What‑if analysis via timelines
+* Auditable experiment review
+* Research on temporal semantics in ML systems
+
+---
+
+## 🧪 Status
+
+**v0.3.0 – TSL Freeze**
+
+* Language semantics frozen
+* Temporal IR stable
+* Execution intentionally deferred
+
+FusionFlow is now suitable for:
+
+* Research publication
+* External review
+* Backend experimentation
+
+---
+
+## 📄 License
+
+MIT License
+
+---
+
+## 🤝 Contributing
+
+FusionFlow welcomes contributions in:
+
+* Language design
+* Temporal semantics
+* IR tooling
+* Backend adapters
+
+Please read the language spec before proposing changes.
