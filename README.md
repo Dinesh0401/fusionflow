@@ -10,7 +10,7 @@ A `.ff` file is **not a script** and **not a config file**. It is a **temporal c
 
 ---
 
-## ✨ Core Ideas
+## ✨ Core Ideas 
 
 * **Temporal Specification Language (TSL)**
   Declare experiments, timelines, and merges explicitly. Time is a first‑class language concept.
