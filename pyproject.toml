@@ -33,6 +33,7 @@ dev = [
     "pytest>=7.0.0",
     "black>=22.0.0",
     "mypy>=0.950",
+    "ruff>=0.4",
 ]
 
 [project.scripts]
