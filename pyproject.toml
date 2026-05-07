@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "fusionflow"
-version = "0.3.0"
+version = "0.4.0-dev"
 description = "A temporal ML pipeline DSL with first-class branching"
 readme = "README.md"
 requires-python = ">=3.8"
@@ -48,3 +48,11 @@ Repository = "https://github.com/Dinesh0401/fusionflow"
 where = ["."]
 include = ["fusionflow*"]
 exclude = ["tests*", "assets*", "vscode-fusionflow*", "dist*", "build*"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP"]
+ignore = ["E501"]
