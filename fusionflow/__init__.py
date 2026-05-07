@@ -2,7 +2,7 @@
 FusionFlow - A temporal ML pipeline DSL
 """
 
-__version__ = "0.4.0-dev"
+__version__ = "0.4.0.dev0"
 
 from .lexer import Lexer
 from .parser import Parser

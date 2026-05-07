@@ -8,6 +8,7 @@ import sys
 from pathlib import Path
 from typing import Any, List, Optional, Sequence, Tuple
 
+from fusionflow import __version__
 from fusionflow.interpreter import Interpreter
 from fusionflow.ir_export import build_temporal_ir
 from fusionflow.lexer import Lexer
@@ -37,7 +38,7 @@ def handle_run(argv: Sequence[str]) -> int:
     args = parser.parse_args(list(argv))
 
     if args.version:
-        print("FusionFlow v0.1.0")
+        print(f"FusionFlow v{__version__}")
         return 0
 
     if not args.file:
