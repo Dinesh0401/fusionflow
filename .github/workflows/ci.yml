@@ -47,15 +47,3 @@ jobs:
 
       - name: Run tests
         run: python -m pytest tests/ -q
-
-      # Optional coverage step. pytest-cov is NOT a declared dependency in
-      # this task; this step is a no-op unless a future change adds it to
-      # the [dev] extra. Do not add pytest-cov here.
-      - name: Upload coverage (if pytest-cov is installed)
-        shell: bash
-        run: |
-          if python -c "import pytest_cov" 2>/dev/null; then
-            python -m pytest tests/ -q --cov=fusionflow --cov-report=xml || true
-          else
-            echo "pytest-cov not installed; skipping coverage."
-          fi
