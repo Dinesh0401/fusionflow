@@ -48,6 +48,22 @@ class TargetStep(PipelineStep):
     field: str
 
 @dataclass
+class WhereStep(PipelineStep):
+    condition: 'Expression'
+
+@dataclass
+class SplitStep(PipelineStep):
+    train_ratio: float
+
+@dataclass
+class FeaturesStep(PipelineStep):
+    fields: List[str]
+
+@dataclass
+class CheckpointStep(PipelineStep):
+    name: str
+
+@dataclass
 class PipelineDefinition(ASTNode):
     name: str
     source: DatasetReference

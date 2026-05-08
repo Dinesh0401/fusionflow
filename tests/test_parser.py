@@ -139,3 +139,84 @@ def test_parse_merge_statement():
     assert isinstance(merge_stmt.strategy, MergeStrategy)
     assert merge_stmt.strategy.name == "prefer_metrics"
     assert merge_stmt.strategy.arguments == ["f1"]
+
+
+def test_parses_pipeline_with_v04_steps():
+    source = """
+    dataset users v1
+        source "users.csv"
+    end
+
+    pipeline scored
+        from users v1
+        derive adult = age >= 18
+        where adult
+        features [age, income]
+        split 0.8
+        checkpoint pre_train
+        target adult
+    end
+    """
+    tokens = Lexer(source).tokenize()
+    program = Parser(tokens).parse()
+    pipelines = [s for s in program.statements if isinstance(s, PipelineDefinition)]
+    assert len(pipelines) == 1
+    step_types = [type(s).__name__ for s in pipelines[0].steps]
+    assert "WhereStep" in step_types
+    assert "FeaturesStep" in step_types
+    assert "SplitStep" in step_types
+    assert "CheckpointStep" in step_types
+
+
+def test_rejects_split_ratio_out_of_range():
+    source = """
+    dataset d v1
+        source "x.csv"
+    end
+    pipeline p
+        from d v1
+        split 1.5
+    end
+    """
+    tokens = Lexer(source).tokenize()
+    with pytest.raises(SyntaxError):
+        Parser(tokens).parse()
+
+
+def test_parses_extend_block_with_v04_steps():
+    source = """
+    dataset d v1
+        source "x.csv"
+    end
+    pipeline p
+        from d v1
+        derive y = 1
+        target y
+    end
+    model m type linear
+    end
+    timeline branch
+        experiment e
+            uses pipeline p
+            uses model m
+            metrics [accuracy]
+            extend {
+                where y == 1
+                features [y]
+                split 0.7
+                checkpoint mid
+            }
+        end
+    end
+    """
+    tokens = Lexer(source).tokenize()
+    program = Parser(tokens).parse()
+    timelines = [s for s in program.statements if isinstance(s, TimelineDefinition)]
+    assert len(timelines) == 1
+    ext = timelines[0].experiments[0].extension
+    assert ext is not None
+    step_types = [type(s).__name__ for s in ext.steps]
+    assert "WhereStep" in step_types
+    assert "FeaturesStep" in step_types
+    assert "SplitStep" in step_types
+    assert "CheckpointStep" in step_types

@@ -10,6 +10,10 @@ from .ast_nodes import (
     DeriveStep,
     SelectStep,
     TargetStep,
+    WhereStep,
+    SplitStep,
+    FeaturesStep,
+    CheckpointStep,
     PipelineExtension,
     ModelDefinition,
     ExperimentDefinition,
@@ -176,6 +180,18 @@ class Parser:
             elif token.type == TokenType.TARGET:
                 steps.append(self.parse_target_step())
                 self.skip_newlines()
+            elif token.type == TokenType.WHERE:
+                steps.append(self.parse_where_step())
+                self.skip_newlines()
+            elif token.type == TokenType.SPLIT:
+                steps.append(self.parse_split_step())
+                self.skip_newlines()
+            elif token.type == TokenType.FEATURES:
+                steps.append(self.parse_features_step())
+                self.skip_newlines()
+            elif token.type == TokenType.CHECKPOINT:
+                steps.append(self.parse_checkpoint_step())
+                self.skip_newlines()
             elif token.type == TokenType.NEWLINE:
                 self.advance()
             else:
@@ -222,6 +238,43 @@ class Parser:
         self.expect(TokenType.TARGET)
         target_name = self.expect(TokenType.IDENTIFIER).value
         return TargetStep(target_name)
+
+    def parse_where_step(self):
+        self.expect(TokenType.WHERE)
+        condition = self.parse_expression()
+        return WhereStep(condition)
+
+    def parse_split_step(self):
+        self.expect(TokenType.SPLIT)
+        token = self.current_token()
+        if token.type != TokenType.NUMBER:
+            raise SyntaxError(f"Expected number after 'split', got {token.type} at line {token.line}")
+        ratio = float(token.value)
+        if not (0.0 < ratio < 1.0):
+            raise SyntaxError(f"Split ratio must be in (0, 1), got {ratio} at line {token.line}")
+        self.advance()
+        return SplitStep(ratio)
+
+    def parse_features_step(self):
+        self.expect(TokenType.FEATURES)
+        self.expect(TokenType.LBRACKET)
+
+        fields = []
+        while self.current_token().type != TokenType.RBRACKET:
+            token = self.expect(TokenType.IDENTIFIER)
+            fields.append(token.value)
+            if self.current_token().type == TokenType.COMMA:
+                self.advance()
+            elif self.current_token().type == TokenType.NEWLINE:
+                self.skip_newlines()
+
+        self.expect(TokenType.RBRACKET)
+        return FeaturesStep(fields)
+
+    def parse_checkpoint_step(self):
+        self.expect(TokenType.CHECKPOINT)
+        name = self.expect(TokenType.IDENTIFIER).value
+        return CheckpointStep(name)
 
     def parse_model_definition(self):
         self.expect(TokenType.MODEL)
@@ -367,6 +420,18 @@ class Parser:
                 self.skip_newlines()
             elif token.type == TokenType.TARGET:
                 steps.append(self.parse_target_step())
+                self.skip_newlines()
+            elif token.type == TokenType.WHERE:
+                steps.append(self.parse_where_step())
+                self.skip_newlines()
+            elif token.type == TokenType.SPLIT:
+                steps.append(self.parse_split_step())
+                self.skip_newlines()
+            elif token.type == TokenType.FEATURES:
+                steps.append(self.parse_features_step())
+                self.skip_newlines()
+            elif token.type == TokenType.CHECKPOINT:
+                steps.append(self.parse_checkpoint_step())
                 self.skip_newlines()
             elif token.type == TokenType.NEWLINE:
                 self.advance()

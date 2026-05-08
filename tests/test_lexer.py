@@ -89,3 +89,13 @@ def test_literal_tokenization():
     string_tokens = [t for t in tokens if t.type == TokenType.STRING]
     assert number_tokens and number_tokens[0].value == 200
     assert string_tokens and string_tokens[0].value == "fast"
+
+
+def test_lexes_v04_keywords():
+    source = "where x > 0 split 0.8 features [a, b] checkpoint snap1"
+    tokens = Lexer(source).tokenize()
+    types = [t.type for t in tokens if t.type is not TokenType.EOF]
+    assert TokenType.WHERE in types
+    assert TokenType.SPLIT in types
+    assert TokenType.FEATURES in types
+    assert TokenType.CHECKPOINT in types
