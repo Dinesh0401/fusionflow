@@ -13,6 +13,7 @@ from typing import Any, Dict, List, Optional, Tuple
 
 @dataclass(frozen=True)
 class DatasetSpec:
+    """Dataset reference: name, version, source path, and schema."""
     name: str
     version: str
     source: str
@@ -80,6 +81,7 @@ class EvalOp(Op):
 
 @dataclass(frozen=True)
 class PipelineSpec:
+    """Ordered ops to apply to a loaded dataset."""
     name: str
     input_dataset: str  # qualified name "name:version"
     ops: Tuple[Op, ...]
@@ -87,6 +89,7 @@ class PipelineSpec:
 
 @dataclass(frozen=True)
 class ModelSpec:
+    """Model declaration: type and params."""
     name: str
     type_name: str
     params: Dict[str, Any]
@@ -94,6 +97,12 @@ class ModelSpec:
 
 @dataclass(frozen=True)
 class ExecutionPlan:
+    """One experiment's complete execution path.
+
+    Plans are immutable. Backends consume them via ``ExecutionBackend.execute``.
+    Use ``all_ops`` to get the canonical execution sequence (pipeline ops ->
+    extension overrides -> TrainOp -> EvalOp).
+    """
     ir_version: str
     experiment_name: str
     timeline: str  # "main" if not in a sub-timeline
@@ -106,7 +115,12 @@ class ExecutionPlan:
     @property
     def all_ops(self) -> Tuple[Op, ...]:
         """Effective op sequence: pipeline.ops + extension_ops + TrainOp + EvalOp.
-        This is the canonical order the backend should execute."""
+
+        This is the canonical order the backend should execute. Backends needing
+        a non-linear lifecycle (e.g. interleaved train/eval for streaming) should
+        read pipeline.ops, extension_ops, model, and metrics directly rather than
+        relying on this property.
+        """
         return (
             *self.pipeline.ops,
             *self.extension_ops,

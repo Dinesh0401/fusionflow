@@ -23,7 +23,17 @@ class SupportReport:
 
 @runtime_checkable
 class ExecutionBackend(Protocol):
-    """All backends must implement this interface."""
+    """Backend protocol. Contract:
+
+    - ``name`` is a unique short string identifier (e.g., "pandas", "spark").
+    - ``supports(plan)`` is consulted first; backends MUST NOT raise on
+      unsupported plans -- return ``SupportReport(supported=False, ...)`` instead.
+    - ``execute(plan)`` MUST return a ``RunResult`` with ``status=FAILED`` rather
+      than raising for plan-level errors. Reserve raises for genuine bugs.
+
+    Note: ``@runtime_checkable`` only verifies attribute presence, not signatures.
+    Add explicit contract tests when introducing a new backend.
+    """
 
     name: str
 

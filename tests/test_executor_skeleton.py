@@ -108,6 +108,23 @@ end
     assert "SplitOp" in extension_op_types
     assert "CheckpointOp" in extension_op_types
 
+    # Ordering contract: pipeline.ops -> extension_ops -> TrainOp -> EvalOp
+    all_ops = plan.all_ops
+    train_idx = next(i for i, op in enumerate(all_ops) if isinstance(op, TrainOp))
+    eval_idx = next(i for i, op in enumerate(all_ops) if isinstance(op, EvalOp))
+    assert train_idx < eval_idx, "TrainOp must precede EvalOp"
+
+    # Extension ops appear before TrainOp
+    pipeline_op_set = set(plan.pipeline.ops)
+    extension_op_set = set(plan.extension_ops)
+    pipeline_indices = [i for i, op in enumerate(all_ops) if op in pipeline_op_set]
+    extension_indices = [i for i, op in enumerate(all_ops) if op in extension_op_set]
+    if pipeline_indices and extension_indices:
+        assert max(pipeline_indices) < min(extension_indices), \
+            "Pipeline ops must precede extension ops in all_ops"
+        assert max(extension_indices) < train_idx, \
+            "Extension ops must precede TrainOp in all_ops"
+
 
 def test_load_plan_rejects_unknown_ir_version():
     ir = {"ir_version": "9.9", "datasets": {}, "pipelines": {}, "models": {}, "experiments": {}, "timelines": {}, "merges": []}
@@ -139,6 +156,34 @@ def test_load_plan_rejects_v04_ops_in_v03_ir():
         "timelines": {},
         "merges": [],
     }
+    with pytest.raises(IRLoadError, match="v0.4-only operation"):
+        load_plan(ir, experiment_name="e")
+
+
+def test_load_plan_rejects_v04_ops_in_v03_ir_extension_branch():
+    """The defensive v0.4-only-ops check must scan timeline.experiments[*].extension too."""
+    ir = {
+        "datasets": {"d:v1": {"name": "d", "version": "v1", "source": "x", "schema": {}}},
+        "pipelines": {"p": {"name": "p", "input": "d:v1", "operations": [{"type": "derive", "target": "y", "expression": "1"}]}},
+        "models": {"m": {"type": "linear", "params": {}}},
+        "experiments": {},
+        "timelines": {
+            "branch": {
+                "parent": "main",
+                "experiments": {
+                    "e": {
+                        "pipeline": "p",
+                        "model": "m",
+                        "metrics": ["acc"],
+                        # v0.4-only op hidden inside an extension on a v0.3 IR
+                        "extension": [{"type": "where", "condition": "y > 0"}],
+                    }
+                },
+            }
+        },
+        "merges": [],
+    }
+    # No ir_version -> defaults to "0.3" -> must reject the where in extension
     with pytest.raises(IRLoadError, match="v0.4-only operation"):
         load_plan(ir, experiment_name="e")
 

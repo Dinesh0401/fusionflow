@@ -108,7 +108,16 @@ def _find_experiment(ir: Dict[str, Any], experiment_name: str) -> Tuple[str, Dic
 
 
 def load_plan(ir: Dict[str, Any], experiment_name: str) -> ExecutionPlan:
-    """Build an ExecutionPlan for one experiment from a v0.4 (or v0.3) IR dict."""
+    """Build an ExecutionPlan for one experiment from an IR dict.
+
+    Supports IR versions 0.3 and 0.4. If ``ir_version`` is absent (i.e. legacy
+    v0.3 IR predating the field), the loader assumes "0.3" and rejects any
+    v0.4-only operations (``where``, ``split``, ``features``, ``checkpoint``).
+
+    Raises:
+        IRLoadError: if ir_version is unsupported, the experiment is not found,
+            or the IR contains v0.4-only ops while declaring v0.3.
+    """
     ir_version = ir.get("ir_version", "0.3")
     if ir_version not in SUPPORTED_IR_VERSIONS:
         raise IRLoadError(

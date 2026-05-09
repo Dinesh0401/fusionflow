@@ -16,6 +16,11 @@ class RunStatus(str, Enum):
 
 @dataclass
 class RunResult:
+    """Structured output of executing a plan against a backend.
+
+    Use ``to_json()`` to serialize for persistence. The mutable shape (not
+    frozen) lets backends accumulate metrics during execution.
+    """
     experiment: str
     backend: str
     status: RunStatus
