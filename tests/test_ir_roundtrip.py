@@ -40,8 +40,8 @@ def test_ir_serialization_is_deterministic():
         target y
     end
     """
-    first = json.dumps(_build_ir_from_source(source), sort_keys=True)
-    second = json.dumps(_build_ir_from_source(source), sort_keys=True)
+    first = json.dumps(_build_ir_from_source(source))
+    second = json.dumps(_build_ir_from_source(source))
     assert first == second
 
 

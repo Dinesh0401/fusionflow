@@ -130,7 +130,9 @@ def _serialize_steps(steps: List[PipelineStep]) -> List[Dict[str, Any]]:
             )
         else:
             raise NotImplementedError(
-                f"IR export does not handle pipeline step type: {type(step).__name__}"
+                f"IR export does not handle pipeline step type: {type(step).__name__}. "
+                f"Add an isinstance branch in fusionflow/ir_export.py::_serialize_steps "
+                f"and bump ir_version if the IR shape changes."
             )
     return operations
 
