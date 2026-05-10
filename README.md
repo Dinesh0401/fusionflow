@@ -210,4 +210,4 @@ FusionFlow welcomes contributions in:
 * IR tooling
 * Backend adapters
 
-Please read the language spec before proposing changes.
+Please read the language spec before proposing hanges.
