@@ -31,6 +31,10 @@ class TokenType(Enum):
     BECAUSE = auto()
     STRATEGY = auto()
     END = auto()
+    WHERE = auto()
+    SPLIT = auto()
+    FEATURES = auto()
+    CHECKPOINT = auto()
 
     # Operators
     PLUS = auto()

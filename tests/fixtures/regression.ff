@@ -1,0 +1,27 @@
+dataset customers v1
+    source "tiny.csv"
+    schema {
+        age: int,
+        income: int,
+        spend: int,
+        churned: int
+    }
+end
+
+pipeline regression_pipe
+    from customers v1
+    features [age, income]
+    split 0.7
+    target spend
+end
+
+model linear
+    type linear_regression
+    params { fit_intercept: true }
+end
+
+experiment regression_baseline
+    uses pipeline regression_pipe
+    uses model linear
+    metrics [rmse, mae]
+end

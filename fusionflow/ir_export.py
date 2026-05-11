@@ -7,10 +7,12 @@ from typing import Any, Dict, List, Optional
 
 from .ast_nodes import (
     BinaryOp,
+    CheckpointStep,
     DatasetDeclaration,
     DeriveStep,
     ExperimentDefinition,
     Expression,
+    FeaturesStep,
     Identifier,
     Literal,
     MemberAccess,
@@ -21,8 +23,10 @@ from .ast_nodes import (
     PipelineStep,
     SchemaField,
     SelectStep,
+    SplitStep,
     TargetStep,
     UnaryOp,
+    WhereStep,
 )
 from .runtime import Runtime, TimelineSpec
 
@@ -96,6 +100,40 @@ def _serialize_steps(steps: List[PipelineStep]) -> List[Dict[str, Any]]:
             operations.append({"type": "select", "fields": list(step.fields)})
         elif isinstance(step, TargetStep):
             operations.append({"type": "target", "field": step.field})
+        elif isinstance(step, WhereStep):
+            operations.append(
+                {
+                    "type": "where",
+                    "condition": _expression_to_string(step.condition),
+                }
+            )
+        elif isinstance(step, SplitStep):
+            operations.append(
+                {
+                    "type": "split",
+                    "train_ratio": step.train_ratio,
+                }
+            )
+        elif isinstance(step, FeaturesStep):
+            operations.append(
+                {
+                    "type": "features",
+                    "fields": list(step.fields),
+                }
+            )
+        elif isinstance(step, CheckpointStep):
+            operations.append(
+                {
+                    "type": "checkpoint",
+                    "name": step.name,
+                }
+            )
+        else:
+            raise NotImplementedError(
+                f"IR export does not handle pipeline step type: {type(step).__name__}. "
+                f"Add an isinstance branch in fusionflow/ir_export.py::_serialize_steps "
+                f"and bump ir_version if the IR shape changes."
+            )
     return operations
 
 
@@ -208,6 +246,7 @@ def build_temporal_ir(runtime: Runtime) -> Dict[str, Any]:
     merges = _serialize_merges(runtime.merges)
 
     return {
+        "ir_version": "0.4",
         "datasets": datasets,
         "pipelines": pipelines,
         "models": models,

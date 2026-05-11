@@ -1,0 +1,27 @@
+dataset customers v1
+    source "tiny.csv"
+    schema {
+        age: int,
+        income: int,
+        spend: int,
+        churned: int
+    }
+end
+
+pipeline churn_pipe
+    from customers v1
+    features [age, income, spend]
+    split 0.7
+    target churned
+end
+
+model rf
+    type random_forest_classifier
+    params { trees: 50, max_depth: 5 }
+end
+
+experiment churn_baseline
+    uses pipeline churn_pipe
+    uses model rf
+    metrics [accuracy, f1]
+end
