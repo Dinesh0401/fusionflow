@@ -219,3 +219,94 @@ def test_pandas_backend_fails_without_target():
     result = backend.execute(plan)
     assert result.status == RunStatus.FAILED
     assert "target" in result.detail.lower()
+
+
+def test_pandas_backend_respects_fit_intercept_false():
+    """Critical regression: fit_intercept: false must actually disable the intercept.
+    Pre-fix, _coerce_linear_params did bool('false')==True and silently flipped this."""
+    source = """
+    dataset customers v1
+        source "tiny.csv"
+    end
+    pipeline regression_pipe
+        from customers v1
+        features [age, income]
+        split 0.7
+        target spend
+    end
+    model lin_no_intercept
+        type linear_regression
+        params { fit_intercept: false }
+    end
+    experiment no_intercept
+        uses pipeline regression_pipe
+        uses model lin_no_intercept
+        metrics [rmse]
+    end
+    """
+    tokens = Lexer(source).tokenize()
+    program = Parser(tokens).parse()
+    runtime = Runtime()
+    Interpreter(runtime).execute(program)
+    ir = build_temporal_ir(runtime)
+    plan = load_plan(ir, experiment_name="no_intercept")
+    backend = PandasBackend(seed=42, data_root=FIXTURES)
+    result = backend.execute(plan)
+    assert result.status == RunStatus.SUCCESS, result.detail
+
+    # Compare against the with-intercept baseline; metrics must differ.
+    intercept_source = source.replace("fit_intercept: false", "fit_intercept: true")
+    tokens2 = Lexer(intercept_source).tokenize()
+    program2 = Parser(tokens2).parse()
+    runtime2 = Runtime()
+    Interpreter(runtime2).execute(program2)
+    ir2 = build_temporal_ir(runtime2)
+    plan2 = load_plan(ir2, experiment_name="no_intercept")
+    result2 = PandasBackend(seed=42, data_root=FIXTURES).execute(plan2)
+
+    assert result.metrics["rmse"] != result2.metrics["rmse"], \
+        f"fit_intercept: false produced same metrics as true ({result.metrics['rmse']}); coercion is broken"
+
+
+def test_pandas_backend_returns_failed_on_missing_csv(tmp_path):
+    """Plan with a missing dataset file must return FAILED RunResult, not raise."""
+    source = """
+    dataset ghost v1
+        source "does_not_exist.csv"
+    end
+    pipeline p
+        from ghost v1
+        features [a]
+        split 0.7
+        target b
+    end
+    model lin
+        type linear_regression
+    end
+    experiment e
+        uses pipeline p
+        uses model lin
+        metrics [rmse]
+    end
+    """
+    tokens = Lexer(source).tokenize()
+    program = Parser(tokens).parse()
+    runtime = Runtime()
+    Interpreter(runtime).execute(program)
+    ir = build_temporal_ir(runtime)
+    plan = load_plan(ir, experiment_name="e")
+    backend = PandasBackend(seed=42, data_root=tmp_path)  # tmp_path is empty
+    result = backend.execute(plan)
+    assert result.status == RunStatus.FAILED
+    assert "does_not_exist.csv" in result.detail or "FileNotFoundError" in result.detail
+
+
+def test_pandas_backend_rejects_unknown_model_params():
+    """Unknown params must raise UnknownModelTypeError at build time, surfacing user intent."""
+    from fusionflow.executor.models import build_model, UnknownModelTypeError
+
+    with pytest.raises(UnknownModelTypeError, match="Unknown params"):
+        build_model("linear_regression", {"criterion": "gini"}, seed=42)
+
+    with pytest.raises(UnknownModelTypeError, match="Unknown params"):
+        build_model("random_forest_classifier", {"min_samples_split": 5}, seed=42)

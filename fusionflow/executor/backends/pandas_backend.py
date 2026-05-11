@@ -31,7 +31,6 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
-import numpy as np  # noqa: F401  -- imported for downstream backends and parity with metrics.py
 import pandas as pd
 
 from fusionflow.executor.backends import SupportReport
@@ -138,6 +137,16 @@ class PandasBackend:
                 status=RunStatus.FAILED,
                 ir_version=plan.ir_version,
                 detail=str(exc),
+            )
+        except (FileNotFoundError, KeyError, ValueError) as exc:
+            # Plan-level errors: missing files, missing columns, bad params.
+            # Per the ExecutionBackend contract, return FAILED rather than raising.
+            return RunResult(
+                experiment=plan.experiment_name,
+                backend=self.name,
+                status=RunStatus.FAILED,
+                ir_version=plan.ir_version,
+                detail=f"{type(exc).__name__}: {exc}",
             )
 
         return RunResult(

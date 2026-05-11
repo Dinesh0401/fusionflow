@@ -17,6 +17,32 @@ class UnknownModelTypeError(ValueError):
     """Raised when ``build_model`` is asked for a type not in the registry."""
 
 
+def _coerce_bool(value: Any, field_name: str) -> bool:
+    """Coerce a parser-supplied value to bool. Strings are parsed leniently;
+    raises UnknownModelTypeError on unrecognized values to surface user intent."""
+    if isinstance(value, bool):
+        return value
+    if isinstance(value, str):
+        normalized = value.strip().lower()
+        if normalized in ("true", "1", "yes"):
+            return True
+        if normalized in ("false", "0", "no"):
+            return False
+        raise UnknownModelTypeError(
+            f"{field_name} must be true/false (got {value!r})"
+        )
+    return bool(value)
+
+
+def _check_no_unknown_params(model_type: str, params: Dict[str, Any], known: set) -> None:
+    unknown = set(params.keys()) - known
+    if unknown:
+        raise UnknownModelTypeError(
+            f"Unknown params for {model_type}: {sorted(unknown)}. "
+            f"Supported: {sorted(known)}."
+        )
+
+
 def supported_model_types() -> Iterable[str]:
     """Return the tuple of model type strings the registry can build."""
     return (
@@ -52,7 +78,8 @@ def build_model(type_name: str, params: Dict[str, Any], seed: int) -> Any:
 def _coerce_linear_params(params: Dict[str, Any]) -> Dict[str, Any]:
     out: Dict[str, Any] = {}
     if "fit_intercept" in params:
-        out["fit_intercept"] = bool(params["fit_intercept"])
+        out["fit_intercept"] = _coerce_bool(params["fit_intercept"], "fit_intercept")
+    _check_no_unknown_params("linear_regression", params, {"fit_intercept"})
     return out
 
 
@@ -63,7 +90,10 @@ def _coerce_logistic_params(params: Dict[str, Any]) -> Dict[str, Any]:
     if "max_iter" in params:
         out["max_iter"] = int(params["max_iter"])
     if "fit_intercept" in params:
-        out["fit_intercept"] = bool(params["fit_intercept"])
+        out["fit_intercept"] = _coerce_bool(params["fit_intercept"], "fit_intercept")
+    _check_no_unknown_params(
+        "logistic_regression", params, {"C", "max_iter", "fit_intercept"}
+    )
     return out
 
 
@@ -80,4 +110,7 @@ def _coerce_rf_params(params: Dict[str, Any]) -> Dict[str, Any]:
         out["n_estimators"] = int(params["n_estimators"])
     if "max_depth" in params:
         out["max_depth"] = int(params["max_depth"])
+    _check_no_unknown_params(
+        "random_forest", params, {"trees", "n_estimators", "max_depth"}
+    )
     return out
