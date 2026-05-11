@@ -12,6 +12,7 @@ from fusionflow import __version__
 from fusionflow.executor import (
     NoopBackend,
     PandasBackend,
+    RunContext,
     RunStatus,
     load_plan,
 )
@@ -203,6 +204,12 @@ def handle_run_executor(argv: Sequence[str]) -> int:
         help="Random seed for the backend (default: 42)",
     )
     parser.add_argument(
+        "--num-threads",
+        type=int,
+        default=1,
+        help="Threads for numpy/sklearn (default: 1 for determinism)",
+    )
+    parser.add_argument(
         "--out",
         dest="out_path",
         default=None,
@@ -275,7 +282,8 @@ def handle_run_executor(argv: Sequence[str]) -> int:
         data_root = (
             Path(args.data_root) if args.data_root is not None else spec_path.parent
         )
-        backend = PandasBackend(seed=args.seed, data_root=data_root)
+        ctx = RunContext(seed=args.seed, num_threads=args.num_threads)
+        backend = PandasBackend(data_root=data_root, context=ctx)
     else:
         backend = NoopBackend()
 
