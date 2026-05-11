@@ -225,16 +225,10 @@ def handle_run_executor(argv: Sequence[str]) -> int:
     parser.add_argument(
         "--mlflow",
         action="store_true",
-        help="(deferred to Task 9) Currently a no-op; prints a warning.",
+        help="Log the run to MLflow (requires `pip install fusionflow[mlflow]`).",
     )
 
     args = parser.parse_args(list(argv))
-
-    if args.mlflow:
-        print(
-            "--mlflow is recognized but the integration lands in Task 9 (deferred)",
-            file=sys.stderr,
-        )
 
     try:
         spec_path = Path(args.file)
@@ -293,6 +287,25 @@ def handle_run_executor(argv: Sequence[str]) -> int:
     except Exception as exc:
         print(f"Error: backend raised during execution: {exc}", file=sys.stderr)
         return 1
+
+    # Optional MLflow logging (opt-in via --mlflow flag).
+    if args.mlflow and result.status != RunStatus.FAILED:
+        try:
+            from fusionflow.integrations.mlflow_logger import (
+                MLflowNotInstalledError,
+                log_run_result,
+            )
+
+            run_id = log_run_result(
+                plan=plan,
+                result=result,
+                extra_params={"seed": args.seed, "num_threads": args.num_threads},
+            )
+            if run_id:
+                print(f"Logged to MLflow: run_id={run_id}", file=sys.stderr)
+        except MLflowNotInstalledError as exc:
+            print(f"Error: {exc}", file=sys.stderr)
+            return 1
 
     # Emit JSON.
     json_output = result.to_json()

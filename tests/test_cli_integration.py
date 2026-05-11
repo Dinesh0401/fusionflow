@@ -133,8 +133,9 @@ def test_cli_run_default_data_root_is_ff_directory(tmp_path):
     assert result.returncode == 0, f"stderr: {result.stderr}"
 
 
-def test_cli_run_mlflow_flag_warns_but_succeeds(tmp_path):
-    """--mlflow is accepted in v0.4 but defers actual integration to Task 9."""
+def test_cli_run_mlflow_flag_succeeds_on_skipped_run(tmp_path):
+    """--mlflow is wired in Task 9. With the noop backend the run is SKIPPED, so the
+    MLflow logger is intentionally not invoked (no install error, exit 0)."""
     result = run_cli(
         "run",
         str(FIXTURES / "regression.ff"),
@@ -143,7 +144,9 @@ def test_cli_run_mlflow_flag_warns_but_succeeds(tmp_path):
         "--data-root", str(FIXTURES),
     )
     assert result.returncode == 0
-    assert "mlflow" in result.stderr.lower() or "mlflow" in result.stdout.lower()
+    # SKIPPED runs short-circuit before importing mlflow, so even without the
+    # `[mlflow]` extra installed the command succeeds quietly.
+    assert "skipped" in result.stdout.lower()
 
 
 # --- backwards-compat (existing v0.3 surface still works) ---
