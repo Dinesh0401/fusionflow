@@ -10,6 +10,27 @@ A `.ff` file is **not a script** and **not a config file**. It is a **temporal c
 
 ---
 
+## What's new in v0.4.0
+
+**FusionFlow runs.** The TSL stops being a spec and starts being a tool.
+
+```bash
+pip install fusionflow
+fusionflow run my_spec.ff --backend pandas --seed 42
+```
+
+- **Real Pandas execution backend** — your `.ff` file actually trains a model and produces metrics.
+- **`fusionflow validate`** subcommand — check a spec without running it.
+- **Cross-process determinism** — same seed + same fixture -> byte-identical `RunResult` JSON.
+- **Opt-in MLflow autologger** (`pip install fusionflow[mlflow]`) — params, metrics, IR artifact.
+- **Jupyter `%%fusionflow` magic** (`pip install fusionflow[jupyter]`) — author and run pipelines inline.
+- **VS Code extension v0.2.0** with 13 snippets for every v0.4 construct.
+- **CI/CD** — automated PyPI publishing on `v*` tags, Marketplace publishing on `vscode-v*` tags.
+
+See [`docs/getting-started.md`](docs/getting-started.md), [`docs/cli.md`](docs/cli.md), [`docs/backends.md`](docs/backends.md), [`docs/ir-spec-v0.4.md`](docs/ir-spec-v0.4.md).
+
+---
+
 ## ✨ Core Ideas 
 
 * **Temporal Specification Language (TSL)**
