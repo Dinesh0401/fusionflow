@@ -9,6 +9,12 @@ from pathlib import Path
 from typing import Any, List, Optional, Sequence, Tuple
 
 from fusionflow import __version__
+from fusionflow.executor import (
+    NoopBackend,
+    PandasBackend,
+    RunStatus,
+    load_plan,
+)
 from fusionflow.interpreter import Interpreter
 from fusionflow.ir_export import build_temporal_ir
 from fusionflow.lexer import Lexer
@@ -128,12 +134,185 @@ def handle_compile(argv: Sequence[str]) -> int:
         return 1
 
 
+def handle_validate(argv: Sequence[str]) -> int:
+    """`fusionflow validate path/to/spec.ff` -- syntactic + semantic check, no execution."""
+    parser = argparse.ArgumentParser(
+        description="Validate a FusionFlow specification (parses + interprets)."
+    )
+    parser.add_argument("file", help="FusionFlow spec file (.ff)")
+
+    args = parser.parse_args(list(argv))
+
+    try:
+        source = Path(args.file).read_text(encoding="utf-8")
+        _build_runtime(source)
+        print(f"OK: {args.file} is a valid FusionFlow specification.")
+        return 0
+    except FileNotFoundError:
+        print(f"Error: File '{args.file}' not found", file=sys.stderr)
+        return 1
+    except SyntaxError as exc:
+        print(f"Syntax Error: {exc}", file=sys.stderr)
+        return 1
+    except Exception as exc:
+        print(f"Error: {exc}", file=sys.stderr)
+        return 1
+
+
+def _discover_experiments(runtime: Runtime) -> List[Tuple[str, str]]:
+    """Return list of (timeline_name, experiment_name) pairs in deterministic order.
+
+    Walks the main timeline first, then sub-timelines (sorted by name).
+    """
+    discovered: List[Tuple[str, str]] = []
+    main = runtime.timelines.get("main")
+    if main is not None:
+        for exp_name in main.experiments.keys():
+            discovered.append(("main", exp_name))
+    for tl_name in sorted(runtime.timelines.keys()):
+        if tl_name == "main":
+            continue
+        timeline = runtime.timelines[tl_name]
+        for exp_name in timeline.experiments.keys():
+            discovered.append((tl_name, exp_name))
+    return discovered
+
+
+def handle_run_executor(argv: Sequence[str]) -> int:
+    """`fusionflow run path/to/spec.ff` -- execute one experiment via a backend."""
+    parser = argparse.ArgumentParser(
+        description="Run a FusionFlow experiment through the executor."
+    )
+    parser.add_argument("file", help="FusionFlow spec file (.ff)")
+    parser.add_argument(
+        "--experiment",
+        dest="experiment",
+        default=None,
+        help="Experiment name. Defaults to the first experiment found.",
+    )
+    parser.add_argument(
+        "--backend",
+        choices=["pandas", "noop"],
+        default="pandas",
+        help="Execution backend (default: pandas)",
+    )
+    parser.add_argument(
+        "--seed",
+        type=int,
+        default=42,
+        help="Random seed for the backend (default: 42)",
+    )
+    parser.add_argument(
+        "--out",
+        dest="out_path",
+        default=None,
+        help="Write RunResult JSON to this file. If omitted, JSON goes to stdout.",
+    )
+    parser.add_argument(
+        "--data-root",
+        dest="data_root",
+        default=None,
+        help="Base directory for resolving DatasetSpec source paths "
+        "(default: directory of the .ff file).",
+    )
+    parser.add_argument(
+        "--mlflow",
+        action="store_true",
+        help="(deferred to Task 9) Currently a no-op; prints a warning.",
+    )
+
+    args = parser.parse_args(list(argv))
+
+    if args.mlflow:
+        print(
+            "--mlflow is recognized but the integration lands in Task 9 (deferred)",
+            file=sys.stderr,
+        )
+
+    try:
+        spec_path = Path(args.file)
+        source = spec_path.read_text(encoding="utf-8")
+        runtime, _, _ = _build_runtime(source)
+        ir_payload = build_temporal_ir(runtime)
+    except FileNotFoundError:
+        print(f"Error: File '{args.file}' not found", file=sys.stderr)
+        return 1
+    except SyntaxError as exc:
+        print(f"Syntax Error: {exc}", file=sys.stderr)
+        return 1
+    except Exception as exc:
+        print(f"Error: {exc}", file=sys.stderr)
+        return 1
+
+    # Pick the experiment to run.
+    discovered = _discover_experiments(runtime)
+    if not discovered:
+        print("Error: no experiments found in spec.", file=sys.stderr)
+        return 1
+
+    if args.experiment is None:
+        experiment_name = discovered[0][1]
+    else:
+        experiment_name = args.experiment
+        available = [name for _, name in discovered]
+        if experiment_name not in available:
+            print(
+                f"Error: experiment '{experiment_name}' not found. "
+                f"Available: {sorted(available)}",
+                file=sys.stderr,
+            )
+            return 2
+
+    # Build the plan.
+    try:
+        plan = load_plan(ir_payload, experiment_name)
+    except Exception as exc:
+        print(f"Error: failed to load plan: {exc}", file=sys.stderr)
+        return 1
+
+    # Construct backend.
+    if args.backend == "pandas":
+        data_root = (
+            Path(args.data_root) if args.data_root is not None else spec_path.parent
+        )
+        backend = PandasBackend(seed=args.seed, data_root=data_root)
+    else:
+        backend = NoopBackend()
+
+    # Execute.
+    try:
+        result = backend.execute(plan)
+    except Exception as exc:
+        print(f"Error: backend raised during execution: {exc}", file=sys.stderr)
+        return 1
+
+    # Emit JSON.
+    json_output = result.to_json()
+    if args.out_path:
+        Path(args.out_path).write_text(json_output + "\n", encoding="utf-8")
+    else:
+        print(json_output)
+
+    # Exit code reflects the run status.
+    if result.status == RunStatus.FAILED:
+        if result.detail:
+            print(f"Run failed: {result.detail}", file=sys.stderr)
+        return 1
+    return 0
+
+
 def main(argv: Optional[Sequence[str]] = None) -> int:
     if argv is None:
         argv = sys.argv[1:]
 
     if argv and argv[0] == "compile":
         return handle_compile(argv[1:])
+
+    if argv and argv[0] == "validate":
+        return handle_validate(argv[1:])
+
+    if argv and argv[0] == "run":
+        return handle_run_executor(argv[1:])
 
     return handle_run(argv)
 
