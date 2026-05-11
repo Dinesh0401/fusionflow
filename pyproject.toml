@@ -38,8 +38,12 @@ dev = [
 mlflow = [
     "mlflow>=2.0.0",
 ]
+jupyter = [
+    "ipython>=8.0.0",
+    "pandas>=1.3.0",
+]
 all = [
-    "fusionflow[mlflow]",
+    "fusionflow[mlflow,jupyter]",
 ]
 
 [project.scripts]
