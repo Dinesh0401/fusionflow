@@ -1,6 +1,6 @@
 # FusionFlow Examples
 
-This folder contains runnable v0.4 examples. All examples assume `fusionflow` is installed (`pip install fusionflow[pandas]`).
+This folder contains runnable v0.4 examples. All examples assume `fusionflow` is installed (`pip install fusionflow`).
 
 ## Files
 
