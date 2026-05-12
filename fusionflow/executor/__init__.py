@@ -31,6 +31,7 @@ from fusionflow.executor.plan import (
     TrainOp,
     EvalOp,
 )
+from fusionflow.executor.run_context import RunContext
 from fusionflow.executor.run_result import RunResult, RunStatus
 from fusionflow.executor.backends import ExecutionBackend, SupportReport
 from fusionflow.executor.backends.noop_backend import NoopBackend
@@ -55,6 +56,7 @@ __all__ = [
     "CheckpointOp",
     "TrainOp",
     "EvalOp",
+    "RunContext",
     "RunResult",
     "RunStatus",
     "ExecutionBackend",
