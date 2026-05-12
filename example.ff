@@ -1,18 +1,25 @@
-dataset customers from "data/customers.csv"
+# Top-level example. For the canonical examples, see examples/.
+# Run with:
+#   fusionflow run example.ff --backend pandas --seed 42 --data-root examples
 
-pipeline churn_features:
-    from customers
-    where active == 1
-    derive spend_per_day = amount / days
-    features [spend_per_day, age]
-    target churned
-    split 80% train, 20% test
+dataset iris v1
+    source "iris.csv"
 end
 
-experiment churn_exp:
-    model random_forest
-    using churn_features
-    metrics [accuracy, f1]
+pipeline iris_pipe
+    from iris v1
+    features [sepal_length, sepal_width, petal_length, petal_width]
+    split 0.8
+    target species
 end
 
-print metrics of churn_exp
+model rf
+    type random_forest_classifier
+    params { trees: 50, max_depth: 5 }
+end
+
+experiment iris_baseline
+    uses pipeline iris_pipe
+    uses model rf
+    metrics [accuracy]
+end

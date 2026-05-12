@@ -1,0 +1,40 @@
+# Timeline branching example (FusionFlow v0.4)
+# Demonstrates main timeline + branch with extension
+#
+# Run with:
+#   fusionflow run examples/timeline.ff --experiment baseline --backend pandas --data-root examples
+#   fusionflow run examples/timeline.ff --experiment tighter_split --backend pandas --data-root examples
+
+dataset customers v1
+    source "customers.csv"
+end
+
+pipeline customer_pipe
+    from customers v1
+    features [age, income]
+    split 0.7
+    target spend
+end
+
+model linear
+    type linear_regression
+    params { fit_intercept: true }
+end
+
+experiment baseline
+    uses pipeline customer_pipe
+    uses model linear
+    metrics [rmse]
+end
+
+timeline experiment_branch
+    experiment tighter_split
+        uses pipeline customer_pipe
+        uses model linear
+        metrics [rmse, mae]
+        extend {
+            split 0.85
+            checkpoint pre_train
+        }
+    end
+end

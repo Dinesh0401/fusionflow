@@ -1,154 +1,104 @@
-# FusionFlow v0.1.0 Release Notes
+# Release Notes
 
-**Release Date:** December 10, 2025
+## v0.4.0 — "FusionFlow Runs" (2026-05-11)
 
-## 🎉 First Official Release
+**The TSL stops being a spec and starts being a tool.** v0.4.0 ships real execution: `pip install fusionflow && fusionflow run my_spec.ff` actually trains a model on Pandas and prints metrics — byte-deterministic across runs given the same seed.
 
-FusionFlow v0.1.0 is a complete temporal ML pipeline DSL with first-class branching primitives.
+### Install
 
-## ✨ What's New
-
-### Core Language Features
-- **Complete DSL Implementation**: Lexer, parser, and interpreter for `.ff` files
-- **Temporal Branching**: `checkpoint`, `timeline`, `merge`, and `undo` primitives
-- **ML Pipeline Support**: Dataset loading, transformations, feature engineering, train/test splits
-- **Built-in Models**: Random Forest and Logistic Regression with automatic training
-- **Metrics**: accuracy, f1, precision, recall, AUC evaluation
-
-### Language Syntax
-```fusionflow
-dataset customers from "data.csv"
-
-pipeline churn_pipeline:
-    from customers
-    where active == 1
-    derive spend_per_day = amount / days
-    features [spend_per_day, age]
-    target churned
-    split 80% train, 20% test
-end
-
-experiment churn_exp:
-    model random_forest
-    using churn_pipeline
-    metrics [accuracy, f1]
-end
-
-print metrics of churn_exp
-```
-
-### Installation Options
-
-#### 1. Python Users (pip)
 ```bash
-pip install fusionflow
+pip install fusionflow                   # core
+pip install "fusionflow[mlflow]"         # + MLflow autologger
+pip install "fusionflow[jupyter]"        # + Jupyter %%fusionflow magic
+pip install "fusionflow[all]"            # everything
 ```
 
-Run scripts:
-```bash
-fusionflow script.ff
-```
+### Highlights
 
-#### 2. Windows Users (.exe - No Python Required)
-Download `fusionflow-cli-0.1.0-windows.exe` (210MB) from [GitHub Releases](https://github.com/Dinesh0401/fusionflow/releases/tag/v0.1.0)
+- **Pandas execution backend** — full op support (`derive`, `select`, `target`, `where`, `split`, `features`, `checkpoint`). 4 model types (linear/logistic regression, RF classifier/regressor) and 5 metrics (rmse, mae, accuracy, f1, auc).
+- **New CLI subcommands**:
+  - `fusionflow run <file>` — execute one experiment via the chosen backend
+  - `fusionflow validate <file>` — parse + interpret without running
+  - `fusionflow compile <file>` — emit Temporal IR JSON (unchanged from v0.3)
+- **Determinism contract** — same seed + same fixture → byte-identical `RunResult.to_json()` across processes (verified by `tests/test_determinism.py`).
+- **MLflow autologger** (opt-in) — `--mlflow` flag logs params, metrics, and the IR artifact.
+- **Jupyter `%%fusionflow` magic** (opt-in) — run pipelines inline in notebooks; metrics returned as a pandas Series.
+- **VS Code extension v0.2.0** — 13 snippets for every v0.4 construct, listed in the "Snippets" Marketplace category.
+- **CI/CD** — GitHub Actions for tests (matrix: ubuntu/windows/macos × py3.10/3.11/3.12), automated PyPI publishing on `v*` tags, automated VS Code Marketplace publishing on `vscode-v*` tags.
+- **138 tests passing** across lexer, parser, IR roundtrip, executor, Pandas backend, CLI integration, determinism, MLflow, Jupyter, VS Code extension, examples, backwards-compat.
 
-Run from command line:
-```cmd
-fusionflow-cli-0.1.0-windows.exe script.ff
-```
+### New language features
 
-#### 3. VS Code Extension
-Install from VS Code Marketplace or `.vsix` file:
-- Syntax highlighting for `.ff` files
-- Keyword recognition
-- Auto-closing brackets
+Four additive keywords (parser unchanged for v0.3 specs without them):
 
-#### 4. From Source
-```bash
-git clone https://github.com/Dinesh0401/fusionflow.git
-cd fusionflow
-pip install -e .
-```
+| Keyword | Meaning |
+|---|---|
+| `where <expr>` | Row filter — keeps rows where the expression evaluates to true |
+| `split <number>` | Train/test split — number is the train ratio in `(0, 1)` |
+| `features [<id>, ...]` | Declares feature columns for training |
+| `checkpoint <name>` | Named save point (no-op in v0.4; persisted state in v0.5+) |
 
-## 📦 What's Included
+### IR v0.4
 
-### Core Components
-- **Lexer** (134 lines): 70+ token types, keyword handling
-- **Parser** (393 lines): Full AST generation
-- **Interpreter** (309 lines): Pandas + scikit-learn execution
-- **Runtime** (104 lines): Copy-on-write temporal branching
-- **CLI** (`fusionflow` command): `--version`, `--print-ast`, `--debug` flags
+The Temporal IR now carries an `ir_version` field. v0.3 IR (no field) is treated as `"0.3"` by the loader. v0.4 IR with new ops cannot be loaded by v0.3 tools. See [`docs/ir-spec-v0.4.md`](docs/ir-spec-v0.4.md).
 
-### Testing
-- **43 tests passing** (100% success rate)
-- Test suites: lexer, parser, end-to-end, comprehensive
-- Coverage: keyword handling, Windows paths, complex pipelines, temporal branching
+### Breaking changes
 
-### Documentation
-- [How to Use FusionFlow](https://github.com/Dinesh0401/fusionflow/blob/main/HOW_TO_USE_FUSIONFLOW.md) - Complete beginner guide
-- [Quick Reference](https://github.com/Dinesh0401/fusionflow/blob/main/QUICK_REFERENCE.md) - One-page cheat sheet
-- [Architecture](https://github.com/Dinesh0401/fusionflow/blob/main/ARCHITECTURE.md) - System design
-- [Publish VS Code Extension](https://github.com/Dinesh0401/fusionflow/blob/main/PUBLISH_VS_CODE_EXTENSION.md)
-- [Distribute Windows .exe](https://github.com/Dinesh0401/fusionflow/blob/main/DISTRIBUTE_WINDOWS_EXE.md)
+- **Reserved keywords**: `where`, `split`, `features`, and `checkpoint` are now reserved. If your v0.3 `.ff` files used these as identifier names (e.g., a schema field called `features`), you must rename before upgrading.
+- **Python 3.8 / 3.9 dropped**: minimum is now Python 3.10.
+- **`fusionflow/upeg.py` removed**: was unused; replacement plugin API lands in v1.0.0.
 
-### Branding
-- Professional FF logo with blue (#4682E6) and orange (#FF8C32) colors
-- Multi-resolution assets (16px-512px)
-- Windows ICO file embedded in .exe
+### CLI flags (new)
 
-## 🎯 Example Use Cases
+| Flag | Default | Description |
+|---|---|---|
+| `--backend pandas\|noop` | `pandas` | Execution backend |
+| `--seed <int>` | `42` | RNG seed for splits + stochastic models |
+| `--num-threads <int>` | `1` | Threads for numpy/sklearn (`1` for determinism) |
+| `--out <path>` | stdout | Write `RunResult.to_json()` to file |
+| `--data-root <path>` | `<.ff dir>` | Base for resolving dataset source paths |
+| `--mlflow` | off | Log run to MLflow (requires `[mlflow]` extra) |
+| `--experiment <name>` | first | Which experiment to execute (when multiple exist) |
 
-1. **Rapid ML Prototyping**: Clean, declarative syntax for quick experiments
-2. **Reproducible Experiments**: Checkpoint/timeline branching for version control
-3. **What-If Analysis**: Test different feature sets in isolated timelines
-4. **Data Pipeline Development**: Built-in lineage tracking
+### Architecture
 
-## 🔧 Technical Details
+`fusionflow run` walks the standard path: **`.ff` → Lexer → Parser → AST → ir_export → IR (JSON) → ir_loader → ExecutionPlan → Backend.execute(plan) → RunResult**. The executor consumes IR ONLY (never AST) — the firewall that lets parser additions stay backwards-compatible. Backends register via the `ExecutionBackend` Protocol in `fusionflow.executor.backends`.
 
-- **Python**: 3.8+ (3.10+ recommended)
-- **Dependencies**: pandas, scikit-learn, numpy
-- **File Extension**: `.ff`
-- **Execution**: Python interpreter or standalone .exe
+### Coming in v0.5
 
-## 📊 Performance
+- Spark backend on the same IR
+- LSP (diagnostics, go-to-def) for the VS Code extension
+- `join` keyword
+- Merge algorithm wired (conflict detection + strategy resolution)
+- W&B integration
+- `fusionflow diff` for IR-aware semantic diffs
 
-- Dataset loading: CSV, Parquet support
-- Execution: Native Pandas operations
-- Model training: scikit-learn backend
-- .exe size: 210MB (includes all dependencies)
+### Coming in v1.0
 
-## 🐛 Known Issues
+- IR frozen forever (semver promise)
+- Full LSP (hover, completion, refactoring)
+- Plugin API for third-party backends, models, metrics
+- Reproducibility certificates
+- arXiv paper
 
-- UPEG (Unified Polyglot Execution Graph) is foundational but not fully implemented
-- Spark backend adapter is placeholder only
-- No GPU execution support yet
-- Join operations are basic (inner join only)
+### Manual setup required before publishing
 
-## 🚀 Coming in v0.2.0
+Both publishing workflows require one-time configuration:
 
-- Full UPEG backend planner implementation
-- Spark execution backend
-- Advanced join types (left, right, outer)
-- GPU acceleration support
-- Column-level lineage tracking
-- Interactive REPL mode
-- Jupyter notebook integration
-- More ML models (XGBoost, LightGBM, neural networks)
+**PyPI** (`.github/workflows/publish-pypi.yml`):
+1. Create a trusted publisher at https://pypi.org/manage/account/publishing/ pointing at this repo and the `publish-pypi.yml` workflow.
+2. In GitHub repo Settings → Environments, create an environment named `pypi`.
+3. Push the `v0.4.0` tag: `git push origin v0.4.0`.
 
-## 📄 License
-
-MIT License - See [LICENSE](https://github.com/Dinesh0401/fusionflow/blob/main/LICENSE) file
-
-## 🤝 Contributing
-
-Contributions welcome! See [CONTRIBUTING.md](https://github.com/Dinesh0401/fusionflow/blob/main/CONTRIBUTING.md)
-
-## 📞 Support
-
-- **Issues**: [GitHub Issues](https://github.com/Dinesh0401/fusionflow/issues)
-- **Documentation**: [GitHub Wiki](https://github.com/Dinesh0401/fusionflow)
-- **Repository**: https://github.com/Dinesh0401/fusionflow
+**VS Code Marketplace** (`.github/workflows/publish-vscode.yml`):
+1. Generate a Personal Access Token at https://learn.microsoft.com/en-us/azure/devops/marketplace/extensions with `Marketplace > Publish` scope.
+2. Add it as a repo secret named `VSCE_PAT`.
+3. In GitHub repo Settings → Environments, create an environment named `vscode-marketplace`.
+4. Push the `vscode-v0.2.0` tag: `git push origin vscode-v0.2.0`.
 
 ---
 
-**Full Changelog**: https://github.com/Dinesh0401/fusionflow/commits/v0.1.0
+## Older releases
+
+- **v0.3.0** — TSL Freeze (language semantics frozen, Temporal IR stable, execution intentionally deferred).
+- **v0.1.0** — First public release (lexer/parser/interpreter for the TSL syntax).

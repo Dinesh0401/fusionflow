@@ -16,6 +16,7 @@ from fusionflow.ast_nodes import (
     MergeStatement,
     MergeStrategy,
     BinaryOp,
+    WhereStep,
 )
 
 
@@ -168,14 +169,30 @@ def test_parses_pipeline_with_v04_steps():
     assert "CheckpointStep" in step_types
 
 
-def test_rejects_split_ratio_out_of_range():
+@pytest.mark.parametrize("ratio", ["0.0", "1.0", "1.5", "2.0"])
+def test_rejects_split_ratio_out_of_range(ratio):
+    source = f"""
+    dataset d v1
+        source "x.csv"
+    end
+    pipeline p
+        from d v1
+        split {ratio}
+    end
+    """
+    tokens = Lexer(source).tokenize()
+    with pytest.raises(SyntaxError):
+        Parser(tokens).parse()
+
+
+def test_rejects_negative_split_ratio():
     source = """
     dataset d v1
         source "x.csv"
     end
     pipeline p
         from d v1
-        split 1.5
+        split -0.5
     end
     """
     tokens = Lexer(source).tokenize()
@@ -220,3 +237,25 @@ def test_parses_extend_block_with_v04_steps():
     assert "FeaturesStep" in step_types
     assert "SplitStep" in step_types
     assert "CheckpointStep" in step_types
+
+
+def test_parses_where_with_complex_expression():
+    """WHERE accepts full expressions with parens, and/or/not."""
+    from fusionflow.ast_nodes import BinaryOp
+    source = """
+    dataset d v1
+        source "x.csv"
+    end
+    pipeline p
+        from d v1
+        derive adult = age >= 18
+        where (age >= 18 and income > 30000) or adult == true
+        target adult
+    end
+    """
+    tokens = Lexer(source).tokenize()
+    program = Parser(tokens).parse()
+    pipelines = [s for s in program.statements if isinstance(s, PipelineDefinition)]
+    where_steps = [s for s in pipelines[0].steps if isinstance(s, WhereStep)]
+    assert len(where_steps) == 1
+    assert isinstance(where_steps[0].condition, BinaryOp)

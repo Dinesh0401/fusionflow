@@ -33,3 +33,10 @@ class RunResult:
         payload = asdict(self)
         payload["status"] = self.status.value  # ensure string, not Enum
         return json.dumps(payload, indent=indent, sort_keys=False)
+
+    @classmethod
+    def from_json(cls, json_str: str) -> "RunResult":
+        """Parse a RunResult from its to_json() output. Coerces status back to enum."""
+        data = json.loads(json_str)
+        data["status"] = RunStatus(data["status"])
+        return cls(**data)
