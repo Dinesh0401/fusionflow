@@ -6,7 +6,7 @@ FusionFlow's executor consumes the IR contract; backends plug in to actually run
 
 ### `pandas` (default)
 
-The reference backend. Loads CSV/Parquet via pandas, applies pipeline ops via `df.eval` and `df.query`, splits via `sklearn.model_selection.train_test_split`, trains via the sklearn estimator registry.
+The reference backend. Loads CSV/Parquet via pandas, applies pipeline ops via `DataFrame.eval(...)` for expression/`WHERE` handling and pandas slicing for selection, splits via `sklearn.model_selection.train_test_split`, trains via the sklearn estimator registry.
 
 **Pros:** zero infra, fits any laptop, fully deterministic with `--seed` + `--num-threads 1`.
 
