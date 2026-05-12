@@ -1,0 +1,46 @@
+name: Publish VS Code Extension
+
+# Triggers on tag pushes matching `vscode-v*` (e.g., `vscode-v0.2.0`).
+#
+# ONE-TIME MANUAL SETUP REQUIRED before this workflow can succeed:
+#   (a) Create a publisher account at https://marketplace.visualstudio.com/manage
+#       (or use an existing one matching the `publisher` field in
+#       vscode-fusionflow/package.json — currently "fusionflow").
+#   (b) Generate a Personal Access Token (PAT) with Marketplace > Publish scope:
+#       https://learn.microsoft.com/en-us/azure/devops/marketplace/extensions
+#   (c) Add the PAT as a repository secret named VSCE_PAT.
+# Without all three of the above in place, the publish step will fail on first run.
+
+on:
+  push:
+    tags:
+      - "vscode-v*"
+
+permissions:
+  contents: read
+
+jobs:
+  publish:
+    name: publish
+    runs-on: ubuntu-latest
+    environment: vscode-marketplace
+    defaults:
+      run:
+        working-directory: vscode-fusionflow
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install vsce
+        run: npm install -g @vscode/vsce
+
+      - name: Package extension
+        run: vsce package
+
+      - name: Publish to VS Code Marketplace
+        run: vsce publish --pat ${{ secrets.VSCE_PAT }}
