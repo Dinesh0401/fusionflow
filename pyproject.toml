@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "fusionflow"
-version = "0.4.0.dev0"
+version = "0.5.0.dev0"
 description = "A temporal ML pipeline DSL with first-class branching"
 readme = "README.md"
 requires-python = ">=3.10"

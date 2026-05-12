@@ -149,10 +149,11 @@ def test_cli_run_mlflow_flag_warns_but_succeeds(tmp_path):
 # --- backwards-compat (existing v0.3 surface still works) ---
 
 def test_cli_version_flag_still_works():
+    from fusionflow import __version__
     result = run_cli("--version")
     assert result.returncode == 0
     assert "FusionFlow" in result.stdout
-    assert "0.4.0.dev0" in result.stdout
+    assert __version__ in result.stdout
 
 
 def test_cli_print_state_still_works():

@@ -159,6 +159,43 @@ def handle_validate(argv: Sequence[str]) -> int:
         return 1
 
 
+def handle_diff(argv) -> int:
+    parser = argparse.ArgumentParser(description="Diff two FusionFlow specs at the IR level")
+    parser.add_argument("file_a", help="First .ff file (the 'before')")
+    parser.add_argument("file_b", help="Second .ff file (the 'after')")
+    parser.add_argument("--json", action="store_true", help="Emit JSON instead of human-readable diff")
+    args = parser.parse_args(list(argv))
+
+    try:
+        source_a = Path(args.file_a).read_text(encoding="utf-8")
+        source_b = Path(args.file_b).read_text(encoding="utf-8")
+        runtime_a, _, _ = _build_runtime(source_a)
+        runtime_b, _, _ = _build_runtime(source_b)
+        ir_a = build_temporal_ir(runtime_a)
+        ir_b = build_temporal_ir(runtime_b)
+
+        from fusionflow.diff import diff_ir, format_diff_human, format_diff_json
+        diff = diff_ir(ir_a, ir_b)
+
+        if args.json:
+            print(format_diff_json(diff))
+        else:
+            print(format_diff_human(diff), end="")
+
+        # Exit code: 0 = identical, 1 = different
+        return 0 if diff.is_empty else 1
+
+    except FileNotFoundError as exc:
+        print(f"Error: {exc}", file=sys.stderr)
+        return 2
+    except SyntaxError as exc:
+        print(f"Syntax Error: {exc}", file=sys.stderr)
+        return 2
+    except Exception as exc:
+        print(f"Error: {exc}", file=sys.stderr)
+        return 2
+
+
 def _discover_experiments(runtime: Runtime) -> List[Tuple[str, str]]:
     """Return list of (timeline_name, experiment_name) pairs in deterministic order.
 
@@ -313,6 +350,9 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
 
     if argv and argv[0] == "run":
         return handle_run_executor(argv[1:])
+
+    if argv and argv[0] == "diff":
+        return handle_diff(argv[1:])
 
     return handle_run(argv)
 
