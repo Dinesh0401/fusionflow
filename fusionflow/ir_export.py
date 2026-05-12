@@ -47,15 +47,25 @@ _OPERATOR_PRECEDENCE: Dict[str, int] = {
 }
 
 
-def _maybe_parenthesize(child: Expression, parent_op: str) -> str:
+_LEFT_ASSOCIATIVE_OPS = frozenset({"+", "-", "*", "/", "and", "or", "<", "<=", ">", ">=", "==", "!="})
+
+
+def _maybe_parenthesize(child: Expression, parent_op: str, side: str) -> str:
     child_text = _expression_to_string(child)
     if not isinstance(child, BinaryOp):
         return child_text
 
     parent_prec = _OPERATOR_PRECEDENCE.get(parent_op, 0)
     child_prec = _OPERATOR_PRECEDENCE.get(child.operator, 0)
+
     if child_prec < parent_prec:
         return f"({child_text})"
+
+    # Same-precedence case: if the parent op is left-associative and the child
+    # is on the right side, parentheses are required to preserve grouping.
+    if child_prec == parent_prec and side == "right" and parent_op in _LEFT_ASSOCIATIVE_OPS:
+        return f"({child_text})"
+
     return child_text
 
 
@@ -69,13 +79,19 @@ def _expression_to_string(expr: Expression) -> str:
     if isinstance(expr, MemberAccess):
         return f"{_expression_to_string(expr.object)}.{expr.member}"
     if isinstance(expr, UnaryOp):
-        operand = _expression_to_string(expr.operand)
+        operand_expr = expr.operand
+        operand_text = _expression_to_string(operand_expr)
         if expr.operator == "not":
-            return f"not {operand}"
-        return f"{expr.operator}{operand}"
+            if isinstance(operand_expr, BinaryOp):
+                return f"not ({operand_text})"
+            return f"not {operand_text}"
+        # Unary minus (or other arithmetic unary) — similarly wrap binary operands
+        if isinstance(operand_expr, BinaryOp):
+            return f"{expr.operator}({operand_text})"
+        return f"{expr.operator}{operand_text}"
     if isinstance(expr, BinaryOp):
-        left = _maybe_parenthesize(expr.left, expr.operator)
-        right = _maybe_parenthesize(expr.right, expr.operator)
+        left = _maybe_parenthesize(expr.left, expr.operator, "left")
+        right = _maybe_parenthesize(expr.right, expr.operator, "right")
         return f"{left} {expr.operator} {right}"
 
     raise TypeError(f"Unsupported expression node: {type(expr)}")
