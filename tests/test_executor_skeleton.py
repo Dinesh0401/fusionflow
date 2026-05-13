@@ -252,3 +252,31 @@ def test_noop_backend_reports_unsupported_ops():
     result = backend.execute(plan)
     assert result.status == RunStatus.FAILED
     assert "FutureOp" in result.detail
+
+
+def test_run_result_to_from_json_round_trip():
+    from fusionflow.executor.run_result import RunResult, RunStatus
+    original = RunResult(
+        experiment="exp1",
+        backend="pandas",
+        status=RunStatus.SUCCESS,
+        ir_version="0.4",
+        metrics={"rmse": 1.5, "mae": 1.2},
+        detail="ok",
+    )
+    restored = RunResult.from_json(original.to_json())
+    assert restored == original
+    assert isinstance(restored.status, RunStatus)
+
+
+def test_run_result_from_json_handles_each_status():
+    from fusionflow.executor.run_result import RunResult, RunStatus
+    for status in (RunStatus.SUCCESS, RunStatus.SKIPPED, RunStatus.FAILED):
+        original = RunResult(
+            experiment="x",
+            backend="b",
+            status=status,
+            ir_version="0.4",
+        )
+        restored = RunResult.from_json(original.to_json())
+        assert restored.status == status

@@ -1,5 +1,5 @@
 # FusionFlow
- 
+
 **A Temporal Specification Language (TSL) for Machine Learning Experimentation**
 
 FusionFlow is a domain-specific language (DSL) for **describing, versioning, and reasoning about machine‑learning experiments over time**.
@@ -7,6 +7,27 @@ FusionFlow is a domain-specific language (DSL) for **describing, versioning, and
 Unlike traditional ML tools that execute scripts linearly, FusionFlow treats experiments as **temporal specifications**: immutable, branchable, mergeable descriptions of *what* was tried, *when*, and *why*.
 
 A `.ff` file is **not a script** and **not a config file**. It is a **temporal contract** for reproducible ML experimentation.
+
+---
+
+## What's new in v0.4.0
+
+**FusionFlow runs.** The TSL stops being a spec and starts being a tool.
+
+```bash
+pip install fusionflow
+fusionflow run my_spec.ff --backend pandas --seed 42
+```
+
+- **Real Pandas execution backend** — your `.ff` file actually trains a model and produces metrics.
+- **`fusionflow validate`** subcommand — check a spec without running it.
+- **Cross-process determinism** — same seed + same fixture -> byte-identical `RunResult` JSON.
+- **Opt-in MLflow autologger** (`pip install fusionflow[mlflow]`) — params, metrics, IR artifact.
+- **Jupyter `%%fusionflow` magic** (`pip install fusionflow[jupyter]`) — author and run pipelines inline.
+- **VS Code extension v0.2.0** with 13 snippets for every v0.4 construct.
+- **CI/CD** — automated PyPI publishing on `v*` tags, Marketplace publishing on `vscode-v*` tags.
+
+See [`docs/getting-started.md`](docs/getting-started.md), [`docs/cli.md`](docs/cli.md), [`docs/backends.md`](docs/backends.md), [`docs/ir-spec-v0.4.md`](docs/ir-spec-v0.4.md).
 
 ---
 
@@ -210,4 +231,4 @@ FusionFlow welcomes contributions in:
 * IR tooling
 * Backend adapters
 
-Please read the language spec before proposing hanges.
+Please read the language spec before proposing changes.
