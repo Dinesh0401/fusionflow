@@ -1,0 +1,33 @@
+# Customer churn prediction example
+# Run: fusionflow run examples/churn_prediction.ff --backend pandas --seed 42 --data-root examples
+
+dataset customers v1
+    source "customers.csv"
+    schema {
+        age: int,
+        income: int,
+        spend: int,
+        churned: int
+    }
+end
+
+pipeline churn_pipe
+    from customers v1
+    derive spend_per_income = spend / income
+    where age >= 18
+    features [age, income, spend, spend_per_income]
+    split 0.7
+    target churned
+end
+
+model rf
+    type random_forest_classifier
+    params { trees: 50, max_depth: 5 }
+end
+
+experiment churn_baseline
+    description "Predict customer churn from demographics and spend"
+    uses pipeline churn_pipe
+    uses model rf
+    metrics [accuracy, f1]
+end

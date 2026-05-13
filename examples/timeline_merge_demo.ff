@@ -1,0 +1,47 @@
+# Timeline merge demo — branch evolves the model, merge back with justification
+#
+# Run:    fusionflow run examples/timeline_merge_demo.ff --experiment main_baseline --data-root examples
+# Branch: fusionflow run examples/timeline_merge_demo.ff --experiment improved --data-root examples
+
+dataset customers v1
+    source "customers.csv"
+end
+
+pipeline customer_pipe
+    from customers v1
+    features [age, income]
+    split 0.7
+    target spend
+end
+
+model linear_v1
+    type linear_regression
+end
+
+model linear_v2
+    type linear_regression
+    params { fit_intercept: false }
+end
+
+experiment main_baseline
+    uses pipeline customer_pipe
+    uses model linear_v1
+    metrics [rmse, mae]
+end
+
+timeline improvement_branch
+    experiment improved
+        uses pipeline customer_pipe
+        uses model linear_v2
+        metrics [rmse, mae]
+        extend {
+            split 0.8
+            checkpoint pre_train
+        }
+    end
+end
+
+merge improvement_branch into main
+    because "Improved RMSE with tighter split; checkpoint enables analysis"
+    strategy prefer_metrics rmse
+end

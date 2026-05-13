@@ -10,6 +10,23 @@ A `.ff` file is **not a script** and **not a config file**. It is a **temporal c
 
 ---
 
+## Project status
+
+[![CI](https://github.com/Dinesh0401/fusionflow/actions/workflows/ci.yml/badge.svg)](https://github.com/Dinesh0401/fusionflow/actions/workflows/ci.yml)
+
+**Current**: `v0.5.0-dev0` — syntax is **frozen** for the v0.5 cycle (see [`SYNTAX_FROZEN.md`](SYNTAX_FROZEN.md)).
+
+**Stabilization phase.** The grammar, IR shape, CLI, and backend Protocol are committed surfaces. New features are additive only.
+
+See:
+- [`ROADMAP.md`](ROADMAP.md) — what's in v0.5, what's deferred to v0.6/v1.0
+- [`CONTRIBUTING.md`](CONTRIBUTING.md) — how to contribute
+- [`DESIGN_PRINCIPLES.md`](DESIGN_PRINCIPLES.md) — the 7 decisions that explain the codebase
+- [`ARCHITECTURE_OVERVIEW.md`](ARCHITECTURE_OVERVIEW.md) — 5-minute orientation
+- [`scripts/demo-script.md`](scripts/demo-script.md) — 90-second demo
+
+---
+
 ## What's new in v0.4.0
 
 **FusionFlow runs.** The TSL stops being a spec and starts being a tool.

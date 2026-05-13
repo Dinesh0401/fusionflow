@@ -1,0 +1,38 @@
+# Feature evolution — same target, increasingly rich feature sets
+# Diff with: fusionflow diff examples/feature_evolution.ff examples/regression.ff
+
+dataset customers v1
+    source "customers.csv"
+end
+
+pipeline minimal
+    from customers v1
+    features [age]
+    split 0.7
+    target spend
+end
+
+pipeline enriched
+    from customers v1
+    derive log_income = income / 1000
+    features [age, income, log_income]
+    split 0.7
+    target spend
+end
+
+model linear
+    type linear_regression
+    params { fit_intercept: true }
+end
+
+experiment minimal_baseline
+    uses pipeline minimal
+    uses model linear
+    metrics [rmse, mae]
+end
+
+experiment enriched_baseline
+    uses pipeline enriched
+    uses model linear
+    metrics [rmse, mae]
+end
