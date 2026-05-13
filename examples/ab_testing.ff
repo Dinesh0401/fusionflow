@@ -1,0 +1,38 @@
+# A/B testing — same pipeline, two model variants on a branch
+# Run baseline: fusionflow run examples/ab_testing.ff --experiment baseline --data-root examples
+# Run variant:  fusionflow run examples/ab_testing.ff --experiment variant_b --data-root examples
+
+dataset customers v1
+    source "customers.csv"
+end
+
+pipeline shared_pipe
+    from customers v1
+    features [age, income, spend]
+    split 0.7
+    target churned
+end
+
+model rf_small
+    type random_forest_classifier
+    params { trees: 25, max_depth: 3 }
+end
+
+model rf_big
+    type random_forest_classifier
+    params { trees: 100, max_depth: 8 }
+end
+
+experiment baseline
+    uses pipeline shared_pipe
+    uses model rf_small
+    metrics [accuracy, f1]
+end
+
+timeline experiment_b
+    experiment variant_b
+        uses pipeline shared_pipe
+        uses model rf_big
+        metrics [accuracy, f1]
+    end
+end
