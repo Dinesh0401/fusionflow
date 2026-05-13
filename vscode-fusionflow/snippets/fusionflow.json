@@ -1,0 +1,111 @@
+{
+  "Dataset declaration": {
+    "prefix": "dataset",
+    "body": [
+      "dataset ${1:name} ${2:v1}",
+      "    source \"${3:path/to/data.csv}\"",
+      "    schema {",
+      "        ${4:field}: ${5:int}",
+      "    }",
+      "end"
+    ],
+    "description": "Declare a versioned dataset with schema"
+  },
+  "Pipeline definition": {
+    "prefix": "pipeline",
+    "body": [
+      "pipeline ${1:name}",
+      "    from ${2:dataset_name} ${3:v1}",
+      "    derive ${4:new_col} = ${5:expression}",
+      "    features [${6:col1, col2}]",
+      "    split ${7:0.8}",
+      "    target ${8:label}",
+      "end"
+    ],
+    "description": "Define a pipeline with derive, features, split, and target"
+  },
+  "Model declaration": {
+    "prefix": "model",
+    "body": [
+      "model ${1:name}",
+      "    type ${2:linear_regression}",
+      "    params {",
+      "        ${3:fit_intercept}: ${4:true}",
+      "    }",
+      "end"
+    ],
+    "description": "Declare a model with type and params"
+  },
+  "Experiment declaration": {
+    "prefix": "experiment",
+    "body": [
+      "experiment ${1:name}",
+      "    uses pipeline ${2:pipeline_name}",
+      "    uses model ${3:model_name}",
+      "    metrics [${4:rmse}]",
+      "end"
+    ],
+    "description": "Declare an experiment binding a pipeline + model + metrics"
+  },
+  "Timeline branch": {
+    "prefix": "timeline",
+    "body": [
+      "timeline ${1:branch_name}",
+      "    experiment ${2:experiment_name}",
+      "        uses pipeline ${3:pipeline_name}",
+      "        uses model ${4:model_name}",
+      "        metrics [${5:rmse}]",
+      "        extend {",
+      "            ${6:where ${7:condition}}",
+      "        }",
+      "    end",
+      "end"
+    ],
+    "description": "Create a timeline branch with an extended experiment"
+  },
+  "Merge with justification": {
+    "prefix": "merge",
+    "body": [
+      "merge ${1:source_timeline} into ${2:target_timeline}",
+      "    because \"${3:justification}\"",
+      "    strategy ${4:prefer_metrics} ${5:f1}",
+      "end"
+    ],
+    "description": "Merge a timeline into another with justification and strategy"
+  },
+  "Derive step": {
+    "prefix": "derive",
+    "body": ["derive ${1:new_col} = ${2:expression}"],
+    "description": "Derive a new column from an expression"
+  },
+  "Where filter": {
+    "prefix": "where",
+    "body": ["where ${1:condition}"],
+    "description": "Filter rows by a boolean expression (v0.4)"
+  },
+  "Split train/test": {
+    "prefix": "split",
+    "body": ["split ${1:0.8}"],
+    "description": "Split into train/test with the given train ratio (v0.4)"
+  },
+  "Features list": {
+    "prefix": "features",
+    "body": ["features [${1:col1, col2}]"],
+    "description": "Declare the feature columns for training (v0.4)"
+  },
+  "Target column": {
+    "prefix": "target",
+    "body": ["target ${1:label}"],
+    "description": "Declare the target column for training"
+  },
+  "Checkpoint marker": {
+    "prefix": "checkpoint",
+    "body": ["checkpoint ${1:name}"],
+    "description": "Insert a named checkpoint marker (v0.4)"
+  },
+  "Select columns": {
+    "prefix": "select",
+    "body": ["select [${1:col1, col2}]"],
+    "description": "Project the dataframe to a subset of columns"
+  }
+}

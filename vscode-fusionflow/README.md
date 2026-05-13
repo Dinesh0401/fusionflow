@@ -2,6 +2,14 @@
 
 Syntax highlighting and language support for FusionFlow temporal ML pipelines.
 
+## What's new in 0.2.0
+
+- 13 snippets for every v0.4 language construct — type `dataset`, `pipeline`,
+  `model`, `experiment`, `timeline`, `merge`, `derive`, `where`, `split`,
+  `features`, `target`, `checkpoint`, or `select` and press **Tab**.
+- TextMate grammar covers the new v0.4 keywords (`where`, `split`, `features`,
+  `checkpoint`).
+
 ## Features
 
 - Syntax highlighting for `.ff` files
@@ -41,3 +49,14 @@ end
 
 print metrics of exp1
 ```
+
+## Companion CLI
+
+The extension provides editor support; for execution, install the CLI:
+
+```bash
+pip install fusionflow
+fusionflow run my_spec.ff --backend pandas
+```
+
+See https://github.com/Dinesh0401/fusionflow for full docs.

@@ -2,14 +2,15 @@
   "name": "fusionflow",
   "displayName": "FusionFlow",
   "description": "Syntax highlighting and language support for FusionFlow temporal ML pipelines",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "publisher": "fusionflow",
   "icon": "icon.png",
   "engines": {
     "vscode": "^1.60.0"
   },
   "categories": [
-    "Programming Languages"
+    "Programming Languages",
+    "Snippets"
   ],
   "repository": {
     "type": "git",
@@ -29,6 +30,12 @@
         "language": "fusionflow",
         "scopeName": "source.fusionflow",
         "path": "./syntaxes/fusionflow.tmLanguage.json"
+      }
+    ],
+    "snippets": [
+      {
+        "language": "fusionflow",
+        "path": "./snippets/fusionflow.json"
       }
     ]
   }
