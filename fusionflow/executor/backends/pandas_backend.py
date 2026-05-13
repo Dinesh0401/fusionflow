@@ -36,6 +36,7 @@ import pandas as pd
 from fusionflow.executor.backends import SupportReport
 from fusionflow.executor.metrics import compute_metric, supported_metrics
 from fusionflow.executor.models import build_model, supported_model_types
+from fusionflow.executor.run_context import RunContext
 from fusionflow.executor.plan import (
     CheckpointOp,
     DeriveOp,
@@ -80,8 +81,17 @@ class PandasBackend:
 
     name = "pandas"
 
-    def __init__(self, seed: int = 42, data_root: Optional[Path] = None) -> None:
-        self.seed = int(seed)
+    def __init__(
+        self,
+        seed: int = 42,
+        data_root: Optional[Path] = None,
+        context: Optional["RunContext"] = None,
+    ) -> None:
+        if context is not None:
+            context.apply_thread_pinning()
+            self.seed = int(context.seed)
+        else:
+            self.seed = int(seed)
         self.data_root = Path(data_root) if data_root is not None else Path.cwd()
 
     def supports(self, plan: ExecutionPlan) -> SupportReport:

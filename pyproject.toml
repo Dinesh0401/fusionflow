@@ -36,6 +36,16 @@ dev = [
     "mypy>=0.950",
     "ruff>=0.4",
 ]
+mlflow = [
+    "mlflow>=2.0.0",
+]
+jupyter = [
+    "ipython>=8.0.0",
+    "pandas>=1.3.0",
+]
+all = [
+    "fusionflow[mlflow,jupyter]",
+]
 
 [project.scripts]
 fusionflow = "fusionflow.__main__:main"
