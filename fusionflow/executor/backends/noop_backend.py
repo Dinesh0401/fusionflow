@@ -1,7 +1,7 @@
 """NoopBackend: validates plan structure and returns a SKIPPED RunResult.
 
 Used for tests, --dry-run mode, and plan inspection. Never reads data, never
-trains models. Returns SUCCESS only when supports() agrees, SKIPPED otherwise."""
+trains models. Returns SKIPPED when supports() agrees, FAILED otherwise."""
 
 from __future__ import annotations
 
