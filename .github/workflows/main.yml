@@ -1,1 +1,41 @@
+name: Quick check
 
+# Minimal single-runner CI. Faster than the matrix in ci.yml — useful when you
+# want a fast green/red signal on every push without waiting for 9 matrix cells.
+# Both workflows run; disable one if you want fewer concurrent runs.
+
+on:
+  push:
+  pull_request:
+
+concurrency:
+  group: quick-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: test
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: pyproject.toml
+
+      - name: Install package + dev extras
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+
+      - name: Run tests
+        run: python -m pytest tests/ -q
