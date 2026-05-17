@@ -26,7 +26,7 @@ Shipped in dev0:
 Targeted for v0.5.0 final:
 - [ ] `join` keyword (multi-dataset support)
 - [ ] Spark backend on the same IR
-- [ ] `fusionflow visualize` — timeline DAG / experiment graph (see [`docs/visualize-design.md`](docs/visualize-design.md))
+- [x] `fusionflow visualize` — timeline DAG / experiment graph (mermaid / dot / html) (see [`docs/visualize-design.md`](docs/visualize-design.md))
 - [ ] Basic LSP (diagnostics + go-to-def) for VS Code v0.3.0
 - [ ] mkdocs docs site at GitHub Pages
 

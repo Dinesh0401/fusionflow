@@ -197,6 +197,44 @@ def handle_diff(argv) -> int:
         return 2
 
 
+def handle_visualize(argv) -> int:
+    parser = argparse.ArgumentParser(description="Visualize a FusionFlow spec as a graph")
+    parser.add_argument("file", help="The .ff file to visualize")
+    parser.add_argument(
+        "--format",
+        choices=["mermaid", "dot", "html"],
+        default="mermaid",
+        help="Output format (default: mermaid)",
+    )
+    parser.add_argument("--out", dest="out_path", help="Write output to a file instead of stdout")
+    args = parser.parse_args(list(argv))
+
+    try:
+        source = Path(args.file).read_text(encoding="utf-8")
+        runtime, _, _ = _build_runtime(source)
+        ir = build_temporal_ir(runtime)
+
+        from fusionflow.visualize import visualize_ir
+        rendered = visualize_ir(ir, fmt=args.format)
+
+        if args.out_path:
+            Path(args.out_path).write_text(rendered, encoding="utf-8")
+            print(f"Wrote {args.format} visualization to {args.out_path}")
+        else:
+            print(rendered, end="")
+        return 0
+
+    except FileNotFoundError as exc:
+        print(f"Error: {exc}", file=sys.stderr)
+        return 2
+    except SyntaxError as exc:
+        print(f"Syntax Error: {exc}", file=sys.stderr)
+        return 2
+    except Exception as exc:
+        print(f"Error: {exc}", file=sys.stderr)
+        return 2
+
+
 def _discover_experiments(runtime: Runtime) -> List[Tuple[str, str]]:
     """Return list of (timeline_name, experiment_name) pairs in deterministic order.
 
@@ -374,6 +412,9 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
 
     if argv and argv[0] == "diff":
         return handle_diff(argv[1:])
+
+    if argv and argv[0] == "visualize":
+        return handle_visualize(argv[1:])
 
     return handle_run(argv)
 

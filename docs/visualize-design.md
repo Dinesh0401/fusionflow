@@ -1,6 +1,6 @@
 # `fusionflow visualize` — Design Doc
 
-**Status:** designed, not implemented. Target: v0.5.x.
+**Status:** implemented in v0.5 (`fusionflow visualize`). This doc is retained as the design rationale.
 
 ## Goal
 
