@@ -39,3 +39,6 @@ Thumbs.db
 # Working artifacts (not source)
 runs/
 data/telemetry/
+
+# mkdocs build output
+site/
