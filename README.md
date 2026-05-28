@@ -3,7 +3,7 @@
 **A Temporal Specification Language (TSL) for Machine Learning Experimentation**
 
 FusionFlow is a domain-specific language (DSL) for **describing, versioning, and reasoning about machine‑learning experiments over time**.
-
+ 
 Unlike traditional ML tools that execute scripts linearly, FusionFlow treats experiments as **temporal specifications**: immutable, branchable, mergeable descriptions of *what* was tried, *when*, and *why*.
 
 A `.ff` file is **not a script** and **not a config file**. It is a **temporal contract** for reproducible ML experimentation.
